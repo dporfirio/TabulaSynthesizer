@@ -1,0 +1,26 @@
+{
+	"moveTo": {
+		"argnames": ["destination"],
+		"argtypes": ["location"],
+		"preconditions": {"canTravel": true},
+		"postconditions": {"currLocation":"$destination"},
+		"verbnet": ["roll-51.3.1","escape-51.1","leave-51.2","run-51.3.2","chase-51.6","reach-51.8"],
+		"synsets": ["travel.v.01","move.v.02","move.v.03","move.v.07"]
+	},
+	"grab": {
+		"argnames": ["item"],
+		"argtypes": ["grabbable"],
+		"preconditions": {"carryingItem": false},
+		"postconditions": {"carryingItem": true},
+		"verbnet": ["obtain-13.5.2","get-13.5.1"],
+		"synsets": ["grab.v.03","grab.v.05"]
+	},
+	"put": {
+		"argnames": ["item", "place"],
+		"argtypes": ["grabbable", "container"],
+		"preconditions": {"carryingItem": true},
+		"postconditions": {"carryingItem": false},
+		"verbnet": ["put-9.1","put_spatial-9.2","put_direction-9.4"],
+		"synsets": ["put.v.01","lodge.v.02"]
+	}
+}

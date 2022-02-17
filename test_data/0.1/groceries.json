@@ -1,0 +1,35 @@
+{
+	"world": {
+		"regions": [
+			{
+				"name": "kitchen",
+				"objects": [
+					{
+						"name": "cabinets",
+						"objects": []
+					}
+				]
+			},
+			{
+				"name": "garage",
+				"objects": [
+					{
+						"name": "car",
+						"objects": [
+										"groceries"
+									]
+					}
+				]
+			},
+			{
+				"name": "living room",
+				"objects": []
+			}
+		]
+		
+	},
+	"nl": "Put the groceries away.",
+	"trajectories": [
+						["home base", "garage", "kitchen", "garage"]
+					]
+}
