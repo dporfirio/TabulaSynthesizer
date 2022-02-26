@@ -65,3 +65,4 @@ if __name__ == "__main__":
 	pipeline.sketch()
 	pipeline.parse_nl()
 	pipeline.plan()
+	print(pipeline.program)

@@ -1,7 +1,7 @@
 {
 	"home base": {"categories":["location", "room"],"class":"room","proper":false, "possessive":false},
 	"garage": {"categories":["location", "room"],"class":"room","proper":false, "possessive":false},
-	"Kitchen": {"categories":["location", "room"],"class":"room","proper":false, "possessive":false},
+	"kitchen": {"categories":["location", "room"],"class":"room","proper":false, "possessive":false},
 	"groceries": {"categories":["grabbable","location"],"class":"item","proper":false, "possessive":false},
 	"countertop": {"categories":["location", "container", "wipeable"],"class":"furniture","proper":false, "possessive":false}
 }

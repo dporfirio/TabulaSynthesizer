@@ -3,12 +3,27 @@ from wordnet_wrapper import *
 from nltk.stem.snowball import SnowballStemmer
 
 
-class EntityDB:
+class EntityData:
 
-	def __init__(self, stemmer=SnowballStemmer("english")):
+	'''
+	Singleton Storage Class
+	'''
+	__instance = None
+
+	@staticmethod
+	def get_instance():
+		if EntityData.__instance is None:
+			EntityData()
+		return EntityData.__instance
+
+	def __init__(self):
+		if EntityData.__instance is not None:
+			raise Exception("EntityData is a singleton!")
+		else:
+			EntityData.__instance = self
+		self.stemmer=SnowballStemmer("english")
 		self.entities = {}    # mapping entities to objects
-		self.obj2entity = {}  # mapping objects to entities
-		self.stemmer = stemmer
+		self.obj2category = {}  # mapping objects to entities
 
 		# initialize the entities dict
 		entities = {}
@@ -30,14 +45,14 @@ class EntityDB:
 
 		# now assemble the eneities objects
 		established_entities = {}
-		for entity, obj_list in entities.items():
-			self.entities[entity] = []
+		for category, obj_list in entities.items():
+			self.entities[category] = []
 			for obj in obj_list:
 				if obj not in established_entities:
-					self.obj2entity[obj] = []
-					established_entities[obj] = Entity(obj, self.obj2entity[obj], stemmer)
-				self.obj2entity[obj].append(entity)
-				self.entities[entity].append(established_entities[obj])
+					self.obj2category[obj] = []
+					established_entities[obj] = Entity(obj, self.obj2category[obj], self.stemmer)
+				self.obj2category[obj].append(category)
+				self.entities[category].append(established_entities[obj])
 
 		# must add an extra
 		if "robot" in self.entities:
@@ -59,7 +74,7 @@ class EntityDB:
 			print("ERROR: cannot find entity object within category")
 			exit()
 
-		return (None, ent_list[0], name)
+		return ent_list[0]
 
 	def get_entities(self, text):
 		print(text)

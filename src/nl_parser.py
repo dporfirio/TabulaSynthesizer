@@ -3,7 +3,6 @@ import nltk
 import copy
 import contractions
 import string
-from nltk.stem.snowball import SnowballStemmer
 from program import *
 from entities import *
 from wordnet_wrapper import *
@@ -16,8 +15,7 @@ class NLParser:
 
 	def __init__(self):
 		self.action_data = ActionData.get_instance()
-		self.stemmer = SnowballStemmer("english")
-		self.entity_db = EntityDB(self.stemmer)
+		self.entity_data = EntityData.get_instance()
 		self.lemmatizer = nltk.stem.wordnet.WordNetLemmatizer()
 		self.ww = WordnetWrapper()
 		self.vnet3 = nltk.corpus.util.LazyCorpusLoader('verbnet3', nltk.corpus.reader.verbnet.VerbnetCorpusReader,r'(?!\.).*\.xml')
@@ -62,12 +60,12 @@ class NLParser:
 	def tag_sentences(self, sentence):
 		sent_split = sentence.split()
 		sentence = " ".join(sent_split)
-		entities = self.entity_db.get_entities(sentence)
+		entities = self.entity_data.get_entities(sentence)
 		doc = nlp(sentence)
 		tags = [(str(token), token.tag_) for token in doc]
 		nouns = [(i, tags[i][0], tags[i][1]) for i in range(len(tags)) \
 				if self.is_noun(tags[i][1]) \
-				and not any(ent[1].name == self.stemmer.stem(tags[i][0]) for ent in entities)]
+				and not any(ent[1].name == self.entity_data.stemmer.stem(tags[i][0]) for ent in entities)]
 		pronouns = [(i, tags[i][0], tags[i][1]) for i in range(len(tags)) if self.is_pronoun(tags[i][1])]
 		verbs = [(i, self.lemmatizer.lemmatize(tags[i][0], "v"), tags[i][1]) for i in range(len(tags)) if self.is_verb(tags[i][1])]
 
@@ -117,7 +115,7 @@ class NLParser:
 				task_hints["constraints"] = list(set(task_hints["constraints"]).difference(set(to_remove)))
 			args = {}
 			for i, argname in enumerate(self.action_data.action_primitives[best_action_name]["argnames"]):
-				args[argname] = best_entities[i]
+				args[argname] = ParamFilled(best_entities[i][1]) if best_entities[i] != "HOLE" else ParamHole()
 			command = Action(best_action_name, args)
 			command_list = task_hints["commands"]
 			if "HOLE" in best_entities:
@@ -134,39 +132,3 @@ class NLParser:
 			task_hints.append(self.get_task_hints(verbs, entities, nouns, pronouns))
 			print(task_hints)
 		return task_hints
-
-	'''
-	SNIPS functions
-	'''
-	#def parse_intent(self, text):
-	#	return self.engine.parse(text, top_n=200)
-
-	#def parse_intents(self, text):
-	#	return self.engine.get_intents(text)
-
-	#def parse_entities(self, text, intent):
-	#	return self.engine.get_slots(text, intent)
-
-	'''
-	init
-	'''
-	#def __init__(self):
-	#	self.engine = SnipsNLUEngine.from_path("commands")
-	#	self.action_data = ActionData.get_instance()
-
-	'''
-	Other functions
-	'''
-	#def create_task_hint(self, intent_data):
-	#	task_hint = {"command": None}
-	#	command_name = intent_data["intent"]["intentName"]
-	#	if command_name not in self.action_data.action_primitives:
-	#		raise Exception("Command \'{}\' is not an available robot function call.".format(command_name))
-		
-	#	return task_hint
-
-	#def create_task_hints(self, ranked_intents):
-	#	ranked_hints = []
-	#	for intent in ranked_intents:
-	#		ranked_hints.append(self.create_task_hint(intent))
-	#	return ranked_hints
