@@ -30,6 +30,6 @@
 	},
 	"nl": "Put the groceries away.",
 	"trajectories": [
-						["home base", "garage", "kitchen", "garage"]
+						["garage", "kitchen", "garage"]
 					]
 }
