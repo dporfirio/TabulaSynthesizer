@@ -1,7 +1,6 @@
 import copy
 import math
 import itertools
-from z3 import *
 from program import *
 
 

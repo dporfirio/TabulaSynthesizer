@@ -1,5 +1,6 @@
 import json
 import copy
+import os
 from entities import *
 
 
@@ -24,7 +25,10 @@ class ActionData:
 		else:
 			ActionData.__instance = self
 		self.action_primitives = None
-		with open("action_primitives.json", "r") as infile:
+		dir_path = os.path.dirname(os.path.realpath(__file__))
+		# print(dir_path)
+		# dir_path = dir_path[:dir_path.index("ctrl.py")]
+		with open("{}/action_primitives.json".format(dir_path), "r") as infile:
 			self.action_primitives = json.load(infile)
 			self.init = copy.copy(self.action_primitives["init"])
 			del self.action_primitives["init"]

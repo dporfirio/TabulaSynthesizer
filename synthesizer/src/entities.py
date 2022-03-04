@@ -1,4 +1,5 @@
 import json
+import os
 from wordnet_wrapper import *
 from nltk.stem.snowball import SnowballStemmer
 
@@ -30,7 +31,8 @@ class EntityData:
 
 		# access the cmd json file
 		ent_file = None
-		with open("entities.json","r") as infile:
+		dir_path = os.path.dirname(os.path.realpath(__file__))
+		with open("{}/entities.json".format(dir_path),"r") as infile:
 			ent_file = json.load(infile)
 
 		if ent_file is None:
