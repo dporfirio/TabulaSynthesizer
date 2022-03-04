@@ -9,7 +9,7 @@ class Controller:
 
 	def __init__(self):
 		rospy.init_node("synthesizer", anonymous=True)
-		rospy.Subscriber("synthesizer/recording", Recording, self.receive_recording)
+		rospy.Subscriber("synthesizer/recording", Recording, self.receive_recording, ())
 		self.pipeline = Pipeline()
 		print("initialized synthesizer node")
 
