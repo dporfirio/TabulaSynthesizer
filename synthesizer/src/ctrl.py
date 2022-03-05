@@ -4,6 +4,7 @@ import rospy
 import rospkg
 from tabula_msgs.msg import Recording
 from pipeline import *
+import test_parser
 
 class Controller:
 
@@ -14,7 +15,17 @@ class Controller:
 		print("initialized synthesizer node")
 
 	def receive_recording(self, msg, args):
-		print("received recording")
+		_, _, world = test_parser.parse()
+		print(msg)
+		nl = msg.utt;
+		traj = [msg.trace]
+		pipeline = Pipeline()
+		pipeline.load_user_input(nl, traj)
+		pipeline.load_world(world)
+		pipeline.sketch()
+		pipeline.parse_nl()
+		pipeline.plan()
+		print(pipeline.program)
 
 
 if __name__ == "__main__":
