@@ -72,6 +72,7 @@ class Program:
 	def __str__(self):
 		s = "PROGRAM\ninit: {}\n".format(self.init_waypoint.label)
 		for label, wp in self.waypoints.items():
+			s += "\n"
 			s += str(wp)
 		return s
 
@@ -92,8 +93,8 @@ class Waypoint:
 	def __str__(self):
 		s = "waypoint: {}\n".format(self.label)
 		for ie in self.if_execs:
-			s += "  >> {}\n".format(str(ie))
-		s += "  acts {}\n".format(" : ".join([str(act) for act in self.postmove_actions]))
+			s += "  goto >> {}".format(str(ie))
+		s += "  >> acts {}\n".format(" : ".join([str(act) for act in self.postmove_actions]))
 		return s
 
 

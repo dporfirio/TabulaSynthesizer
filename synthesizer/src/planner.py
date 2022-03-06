@@ -130,18 +130,10 @@ class Planner:
 			return False
 		return True
 
-	def is_conflicting_action(self, act_history, new_act):
-		if len(act_history) == 1 and new_act.name == "moveTo":
-			return False
-		elif len(act_history) ==1 and new_act.name != "moveTo":
-			return True
-
-		# get current "moveTo" and actions after the "moveTo"
+	def find_previous_moveto(self, rev_act_history):
 		curr_move_to = None
-		act_history = copy.copy(act_history)
-		act_history.reverse()
 		post_actions = []
-		for i, act in enumerate(act_history):
+		for i, act in enumerate(rev_act_history):
 			if act.name == "moveTo":
 				curr_move_to = act
 				break
@@ -149,14 +141,33 @@ class Planner:
 		if curr_move_to is None:
 			print("ERROR: must have a moveTo action in sequence of actions")
 			exit()
+		return curr_move_to, post_actions, i
 
-		# see if there is a previous "moveTo", determine expected action
+	def find_matching_moveto(self, rev_act_history, move_to, start_idx):
 		other_move_to = None
-		for j in range(i+1, len(act_history)):
-			act = act_history[j]
-			if act.equals(curr_move_to):
+		cap_acts = []
+		for j in range(start_idx+1, len(rev_act_history)):
+			act = rev_act_history[j]
+			if act.equals(move_to):
 				other_move_to = act
 				break
+			elif act.name == "moveTo":
+				cap_acts = []
+			else:
+				cap_acts.append(act)
+		return other_move_to, cap_acts, j
+
+	def is_conflicting_action(self, act_history, new_act):
+		if len(act_history) == 1 and new_act.name == "moveTo":
+			return False
+		elif len(act_history) ==1 and new_act.name != "moveTo":
+			return True
+
+		# get current "moveTo" and actions after the "moveTo"
+		act_history = copy.copy(act_history)
+		act_history.reverse()
+		curr_move_to, post_actions, i = self.find_previous_moveto(act_history)
+		other_move_to, _, j = self.find_matching_moveto(act_history, curr_move_to, i)
 
 		if other_move_to is None:
 			return False
@@ -214,7 +225,16 @@ class Planner:
 		while current in list(came_from.keys()):
 			current = came_from[current]
 			total_path.insert(0, current[0][-1])
-		return total_path
+		# cap the trace
+		act_history = copy.copy(total_path)
+		act_history.reverse()
+		curr_move_to, _, i = self.find_previous_moveto(act_history)
+		other_move_to, cap_acts, _ = self.find_matching_moveto(act_history, curr_move_to, i)
+		if other_move_to is not None:
+			act_history = act_history[i:]
+			cap_acts.extend(act_history)
+			cap_acts.reverse()
+		return cap_acts
 
 	def goal_satisfied(self, curr, act_seq, hint_list):
 		# is the sequence of actions present in the curr?
@@ -246,7 +266,6 @@ class Planner:
 				empty_wp_penalty += 1
 		val = (len(act_seq) - act_seq_idx) + (len(hint_list) - hint_list_idx) + empty_wp_penalty
 		act_str = " : ".join([str(item) for item in curr[0]])
-		print("{} - {}".format(val, act_str))
 		return val
 
 	def astar(self, start, act_seq, hint_list):
@@ -277,7 +296,7 @@ class Planner:
 		curr_acts = []
 		wp = None
 		for i, act in enumerate(act_seq):
-			if act.name == "moveTo" or i == len(act_seq) - 1:
+			if act.name == "moveTo":
 				if wp is None:
 					wp = sketch.waypoints[act.args["destination"].label.name]
 					continue
