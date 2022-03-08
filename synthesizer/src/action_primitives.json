@@ -31,6 +31,14 @@
 		"verbnet": ["put-9.1","put_spatial-9.2","put_direction-9.4"],
 		"synsets": ["put.v.01","lodge.v.02"]
 	},
+	"say": {
+		"argnames": ["speech"],
+		"argtypes": ["content"],
+		"preconditions": {"closeTo": ["person"], "interruptable": true},
+		"postconditions": {},
+		"verbnet": ["put-9.1","put_spatial-9.2","put_direction-9.4"],
+		"synsets": ["put.v.01","lodge.v.02"]
+	},
 
 	"init": {
 		"canTravel": true,

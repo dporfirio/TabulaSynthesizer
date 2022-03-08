@@ -12,5 +12,5 @@ def parse():
 		data = json.load(infile)
 		nl = data["nl"]
 		traj = data["trajectories"]
-		world = None
+		world = data["world"]
 	return nl, traj, world

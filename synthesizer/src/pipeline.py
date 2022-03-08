@@ -1,6 +1,7 @@
 from simple_sketcher import *
 from nl_parser import *
 from planner import *
+from program import *
 
 
 class Pipeline:
@@ -41,7 +42,7 @@ class Pipeline:
 		self.raw_traj = traj
 
 	def load_world(self, world):
-		self.world_st = world
+		self.world_st = WorldState(world)
 
 	def sketch(self):
 		self.sketch_data = self.traj_parser.sketch(self.raw_traj)

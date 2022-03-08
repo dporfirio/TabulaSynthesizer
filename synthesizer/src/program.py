@@ -38,8 +38,8 @@ class ActionData:
 
 class WorldState:
 
-	def __init__(self):
-		self.state = {}
+	def __init__(self, world):
+		self.world = world
 
 
 class RobotState:
@@ -61,6 +61,7 @@ class Program:
 	def add_waypoint_from_trace(self, wp_label, prev_wp_label):
 		if wp_label not in self.waypoints:
 			self.waypoints[wp_label] = Waypoint(wp_label)
+			self.add_postconditions_from_world(self.waypoints[wp_label])
 		if self.init_waypoint is None:
 			self.init_waypoint = self.waypoints[wp_label]
 		if prev_wp_label is not None:
@@ -68,6 +69,16 @@ class Program:
 			prev_wp = self.waypoints[prev_wp_label]
 			if not any([if_exec.is_same_trans(wp) for if_exec in prev_wp.if_execs]):
 				prev_wp.if_execs.append(IfExec(wp))
+
+	def add_postconditions_from_world(self, wp):
+		'''
+		postconditions on the moveTo command may be affected based on 
+		the robot's location
+		'''
+		move_action = wp.move_action
+		move_post = move_action.postcondition
+		conditions = move_post._or[0]
+		items_at_wp = move_action.name
 
 	def __str__(self):
 		s = "PROGRAM\ninit: {}\n".format(self.init_waypoint.label)
