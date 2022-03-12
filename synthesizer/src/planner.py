@@ -230,10 +230,19 @@ class Planner:
 		act_history.reverse()
 		curr_move_to, _, i = self.find_previous_moveto(act_history)
 		other_move_to, cap_acts, _ = self.find_matching_moveto(act_history, curr_move_to, i)
+		#print("cap acts")
+		#for cap_act in cap_acts:
+		#	print(cap_act)
 		if other_move_to is not None:
+		#	print("other move to is not none")
 			act_history = act_history[i:]
 			cap_acts.extend(act_history)
-			cap_acts.reverse()
+		else:
+			cap_acts = act_history
+		cap_acts.reverse()
+		#print("cap acts")
+		#for cap_act in cap_acts:
+		#	print(cap_act)
 		return cap_acts
 
 	def goal_satisfied(self, curr, act_seq, hint_list):
@@ -299,13 +308,18 @@ class Planner:
 			if act.name == "moveTo":
 				if wp is None:
 					wp = sketch.waypoints[act.args["destination"].label.name]
+					curr_acts.clear()
 					continue
-				if i == len(act_seq) - 1:
-					curr_acts.append(act)
+				#if i == len(act_seq) - 1:
+				#	curr_acts.append(act)
 				wp_acts = wp.postmove_actions
 				wp.postmove_actions = copy.copy(curr_acts)
 				curr_acts.clear()
 				wp = sketch.waypoints[act.args["destination"].label.name]
+			elif i == len(act_seq) - 1:
+				curr_acts.append(act)
+				wp_acts = wp.postmove_actions
+				wp.postmove_actions = copy.copy(curr_acts)
 			else:
 				curr_acts.append(act)
 
