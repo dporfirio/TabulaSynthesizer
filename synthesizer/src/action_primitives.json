@@ -36,8 +36,16 @@
 		"argtypes": ["content"],
 		"preconditions": {"closeToPerson": false, "interruptable": true},
 		"postconditions": {},
-		"verbnet": ["say-37.7","transfer_mesg-37.1.1","tell-37.2","manner_speaking-37.3","inquire-37.1.2","interrogate-37.1.3"],
-		"synsets": ["state.v.01","allege.v.01","suppose.v.01","order.v.01","pronounce.v.01","say.v.08","say.v.09","say.v.11","ask.v.01","ask.v.02","ask.v.03","ask.v.04","ask.v.05","ask.v.07"]
+		"verbnet": ["say-37.7","transfer_mesg-37.1.1","tell-37.2","manner_speaking-37.3","inquire-37.1.2","interrogate-37.1.3","transfer_mesg-37.1.1","tell-37.2","manner_speaking-37.3","talk-37.5","lecture-37.11"],
+		"synsets": ["state.v.01","allege.v.01","suppose.v.01","order.v.01","pronounce.v.01","say.v.08","say.v.09","say.v.11","ask.v.01","ask.v.02","ask.v.03","ask.v.04","ask.v.05","ask.v.07", "tell.v.03"]
+	},
+	"tell": {
+		"argnames": ["speech"],
+		"argtypes": ["narrative"],
+		"preconditions": {"closeToPerson": true, "interruptable": false},
+		"postconditions": {},
+		"verbnet": ["say-37.7","transfer_mesg-37.1.1","tell-37.2","manner_speaking-37.3","inquire-37.1.2","interrogate-37.1.3","transfer_mesg-37.1.1","tell-37.2","manner_speaking-37.3","talk-37.5","lecture-37.11"],
+		"synsets": ["state.v.01","allege.v.01","suppose.v.01","order.v.01","pronounce.v.01","say.v.08","say.v.09","say.v.11","ask.v.01","ask.v.02","ask.v.03","ask.v.04","ask.v.05","ask.v.07", "tell.v.03"]
 	},
 
 	"init": {

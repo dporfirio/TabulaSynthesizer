@@ -6,5 +6,15 @@
 	"groceries": {"categories":["grabbable","location"],"class":"item","proper":false, "possessive":false},
 	"countertop": {"categories":["location", "container", "wipeable"],"class":"furniture","proper":false, "possessive":false},
 	"person": {"categories":["person","location"],"class":"Person","proper":false, "possessive":true},
-	"speech":{"categories":["content"],"class":"Speech","proper":false, "possessive":false}
+	"$speech":{"categories":["content"],"class":"Speech","proper":false, "possessive":false},
+
+	"Three Little Pigs": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
+	"Hamlet": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
+	"Paddington": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
+	"Lord of the Rings": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
+	"Snow White": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
+	"Cinderella": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
+	"Great Expectations": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
+
+	"null":{"categories":["null"],"class":"null","proper":false, "possessive":false}
 }

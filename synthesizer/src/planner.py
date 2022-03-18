@@ -1,6 +1,7 @@
 import copy
 import math
 import itertools
+import time
 from program import *
 
 
@@ -178,7 +179,12 @@ class Planner:
 		return False
 
 	def get_current_neighbors(self, current):
+		#print("\nGETTING NEIGHBORS to {} (len {})".format(str([str(curr) for curr in current[0]]), len(current[0])))
 		neighbors = []
+		#print(len(current[0]))
+		#for act in current[0]:
+		#	print(act)
+		#print()
 		curr_args = {}
 		action_history = list(current[0])
 		most_recent_action = action_history[-1]
@@ -245,60 +251,113 @@ class Planner:
 		#	print(cap_act)
 		return cap_acts
 
-	def goal_satisfied(self, curr, act_seq, hint_list):
-		# is the sequence of actions present in the curr?
-		# is the hint_list present in the curr?
+	def trace_satisfied_hints_helper(self, curr_act_idx, curr_hint_idx, act_history, hint_list, detached_tracker):
+		# recursive helper method
+		# base case
+		if curr_act_idx == len(act_history):
+			if curr_hint_idx == len(hint_list) and all(list(detached_tracker.values())):
+				return True
+			return False
+
+		# recursive case
+		curr_act = act_history[curr_act_idx]
+		result = False
+		# -- see if current hint matches
+		if curr_hint_idx < len(hint_list):
+			curr_hint = hint_list[curr_hint_idx]
+			if curr_hint.is_superset(curr_act):
+				result = result or self.trace_satisfied_hints_helper(curr_act_idx + 1, curr_hint_idx + 1, act_history, hint_list, detached_tracker)
+		args = list(curr_act.args.values())
+		args = [argval.label for argval in args]
+		#print(args)
+		for entity, val in detached_tracker.items():
+			if not val:
+				if entity in args:
+					detached_tracker_copy = copy.copy(detached_tracker)
+					detached_tracker_copy[entity] = True
+					result = result or self.trace_satisfied_hints_helper(curr_act_idx + 1, curr_hint_idx, act_history, hint_list, detached_tracker_copy)
+		result = result or self.trace_satisfied_hints_helper(curr_act_idx + 1, curr_hint_idx, act_history, hint_list, detached_tracker)
+		return result
+
+	def trace_satisfies_hints(self, act_history, hint_list, detached_entities):
+		# recursively determine if the list of hints and detached entities are SEPARATELY
+		# present in the act_history.
+		detached_tracker = {}
+		for ent in detached_entities:
+			detached_tracker[ent] = False
+		to_return = self.trace_satisfied_hints_helper(0, 0, act_history, hint_list, detached_tracker)
+		#time.sleep(2)
+		return to_return
+
+	def goal_satisfied(self, curr, act_seq, hint_list, detached_entities):
+		# 1) is the sequence of actions present in the curr?
+		# 2) is the hint_list present in the curr?
+		# 3) are all incomplete hints in the sequence? Each must be separately present. 
 		act_history = curr[0]
 		act_seq_idx = 0
-		hint_list_idx = 0
+		#hint_list_idx = 0
+		detached_ents_included = 0
 		for act in act_history:
 			if act_seq_idx < len(act_seq) and act_seq[act_seq_idx].is_superset(act):
 				act_seq_idx += 1
-			if hint_list_idx < len(hint_list) and hint_list[hint_list_idx].is_superset(act):
-				hint_list_idx += 1
-		if act_seq_idx == len(act_seq) and hint_list_idx == len(hint_list):
+			#if hint_list_idx < len(hint_list) and hint_list[hint_list_idx].is_superset(act):
+			#	hint_list_idx += 1
+		#if act_seq_idx == len(act_seq) and hint_list_idx == len(hint_list):
+		if act_seq_idx == len(act_seq) and self.trace_satisfies_hints(act_history, hint_list, detached_entities):
 			return True
 		return False
 
-	def heuristic(self, curr, act_seq, hint_list):
-		# how far are we from including the act_seq and hint_list in curr?
+	def heuristic(self, curr, act_seq, hint_list, detached_entities):
+		# how far are we from including the act_seq, hint_list, and incomplete_hint_seq in curr?
 		act_history = curr[0]
 		act_seq_idx = 0
 		hint_list_idx = 0
 		empty_wp_penalty = 0
+		seen_wp_list = [] # DO NOT double-penalize empty waypoints
 		for i, act in enumerate(act_history):
 			if act_seq_idx < len(act_seq) and act_seq[act_seq_idx].is_superset(act):
 				act_seq_idx += 1
 			if hint_list_idx < len(hint_list) and hint_list[hint_list_idx].is_superset(act):
 				hint_list_idx += 1
 			if i < len(act_history) - 1 and act.name == "moveTo" and act_history[i+1].name == "moveTo":
-				empty_wp_penalty += 1
+				if act.args["destination"].label not in seen_wp_list:
+					empty_wp_penalty += 1
+					seen_wp_list.append(act.args["destination"].label)
 		val = (len(act_seq) - act_seq_idx) + (len(hint_list) - hint_list_idx) + empty_wp_penalty
 		act_str = " : ".join([str(item) for item in curr[0]])
 		return val
 
-	def astar(self, start, act_seq, hint_list):
+	def astar(self, start, act_seq, hint_list, detached_entities):
 		open_set = [start]
 		came_from = {}
 		g_score = {}  # if an element is not here, the val is inf
 		g_score[start] = 0
 		f_score = {}  # if an element is not here, the val is inf
-		f_score[start] = self.heuristic(start, act_seq, hint_list)
+		f_score[start] = self.heuristic(start, act_seq, hint_list, detached_entities)
 		while len(open_set) > 0:
 			current = open_set[0]
-			if self.goal_satisfied(current, act_seq, hint_list):
+			if self.goal_satisfied(current, act_seq, hint_list, detached_entities):
 				return self.reconstruct_path(came_from, current)
 			open_set.remove(current)
-			neighbors = self.get_current_neighbors(current)
+			# adhere to the length cap
+			# SIMPLE: length cap = len(act_seq)*3 with a minimum of 10
+			if len(current[0]) > max(10, len(act_seq) * 3):
+				neighbors = []
+			else:
+				neighbors = self.get_current_neighbors(current)
+			#time.sleep(1)
 			for neighbor in neighbors:
+			#	print(neighbor[0][-1])
 				tentative_g_score = g_score[current] + (0 if self.is_repeat_action(list(current[0]), neighbor) else 1)
 				if tentative_score < g_score[neighbor] if neighbor in g_score else 100000:
 					came_from[neighbor] = current
 					g_score[neighbor] = tentative_g_score
-					f_score[neighbor] = tentative_g_score + self.heuristic(neighbor, act_seq, hint_list)
+					f_score[neighbor] = tentative_g_score + self.heuristic(neighbor, act_seq, hint_list, detached_entities)
 					if neighbor not in open_set:
 						open_set.append(neighbor)
 						open_set.sort(key=lambda x: f_score[x])
+			#	print(f_score[neighbor])
+			#print()
 		return None
 
 	def update_sketch(self, sketch, act_seq):
@@ -323,7 +382,7 @@ class Planner:
 			else:
 				curr_acts.append(act)
 
-	def solve_helper(self, trace, hint_list):
+	def solve_helper(self, trace, hint_list, detached_entities):
 		ad = ActionData.get_instance()
 		act_seq = []
 		for wp_dict in trace:
@@ -334,14 +393,21 @@ class Planner:
 		#print(" : ".join([str(act) for act in act_seq]))
 		#print(" : ".join([str(act) for act in hint_list]))
 		start = ((ad.get_idle(),), tuple(key for key in sorted(list(ad.init.keys()))), tuple([ad.init[key] for key in sorted(list(ad.init.keys()))]))
-		return self.astar(start, act_seq, hint_list)
+		return self.astar(start, act_seq, hint_list, detached_entities)
 
 	def solve(self, trace, hints, sketch):
 		hint_seq = []
 		for hint_dict in hints:
 			hint_seq.extend(hint_dict["commands"])
 			hint_seq.extend(hint_dict["half-commands"])
-		act_seq = self.solve_helper(trace, hint_seq)
+
+		# TODO: add incomplete hints! An unattached entity (incomplete hint)
+		# MUST be included in the solution. SEPARATELY.
+		detached_entities = []
+		for hint_dict in hints:
+			if len(hint_dict["constraints"]) > 0:
+				detached_entities.append(hint_dict["constraints"][0][1])
+		act_seq = self.solve_helper(trace, hint_seq, detached_entities)
 		print("SOLUTION")
 		print(" : ".join([str(act) for act in act_seq]))
 		self.update_sketch(sketch, act_seq)

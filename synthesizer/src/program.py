@@ -34,6 +34,7 @@ class ActionData:
 			del self.action_primitives["init"]
 
 	def get_idle(self):
+		print("getting idle")
 		return Action("idle", {})
 
 class WorldState:
@@ -79,6 +80,11 @@ class Program:
 		move_post = move_action.postcondition
 		conditions = move_post._or[0]
 		items_at_wp = move_action.name
+
+	def write_result(self, path):
+		s = str(self)
+		with open(path, "w") as outfile:
+			outfile.write(s)
 
 	def __str__(self):
 		s = "PROGRAM\ninit: {}\n".format(self.init_waypoint.label)
@@ -130,7 +136,7 @@ class Param:
 	def equals(self, other):
 		if self.hole and other.hole:
 			return True
-		if self.label == other.label:
+		if self.label.equals(other.label):
 			return True
 		return False
 
@@ -142,7 +148,7 @@ class ParamFilled(Param):
 
 	def __str__(self):
 		s = "Param:\n"
-		s += self.label.name
+		s += str(self.label)
 		return s
 
 class ParamHole(Param):
@@ -180,7 +186,7 @@ class Action:
 			other_argval = other.args[arg]
 			if argval.hole:
 				continue
-			if argval.label != other_argval.label:
+			if not argval.label.equals(other_argval.label):
 				return False
 		return True
 

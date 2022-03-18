@@ -78,6 +78,19 @@ class EntityData:
 
 		return ent_list[0]
 
+	def get_null_entity(self):
+		return self.get_entity("null", "null")
+
+	def add_new_entity(self, entity):
+		categories = entity.categories
+		for cat in categories:
+			if cat not in self.entities:
+				self.entities[cat] = []
+			if any([True for other in self.entities[cat] if entity.equals(other)]):
+				continue
+			self.entities[cat].append(entity)
+		self.obj2category[entity] = categories
+
 	def get_entities(self, text):
 		print(text)
 		nonstandard_arr = text.split()
@@ -140,8 +153,8 @@ class Entity:
 	def __init__(self, name, categories, stemmer=SnowballStemmer("english")):
 		self.wordnet = WordnetWrapper()
 		self.name = name
-		self.synonyms, self.antonyms = self.wordnet.get_synonyms_antonyms(self.name)
-		self.synsets = self.wordnet.get_synsets_by_word(self.name)
+		#self.synonyms, self.antonyms = self.wordnet.get_synonyms_antonyms(self.name)
+		#self.synsets = self.wordnet.get_synsets_by_word(self.name)
 		self.categories = categories
 		self.categories.sort()
 
@@ -151,6 +164,13 @@ class Entity:
 		self.standard_name = stemmer.stem(standard_name)
 		self.stemmer = stemmer
 
+	def equals(self, other):
+		if other.name != self.name:
+			return False
+		if other.categories != self.categories:
+			return False
+		return True
+
 	def __str__(self):
 		return self.name
 
@@ -159,3 +179,24 @@ class Entity:
 
 	def duplicate(self):
 		return Entity(self.name, self.categories, self.stemmer)
+
+
+class SpeechEntity(Entity):
+
+	def __init__(self, name, categories, speech):
+		super().__init__(name, categories)
+		self.speech = speech
+
+	def equals(self, other):
+		if other.name != self.name:
+			return False
+		if other.categories != self.categories:
+			return False
+		if type(other) != SpeechEntity:
+			return False
+		if other.speech != self.speech:
+			return False
+		return True
+
+	def __str__(self):
+		return "speech: {}".format(self.speech)

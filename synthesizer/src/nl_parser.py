@@ -68,7 +68,6 @@ class NLParser:
 				and not any(ent[1].name == self.entity_data.stemmer.stem(tags[i][0]) for ent in entities)]
 		pronouns = [(i, tags[i][0], tags[i][1]) for i in range(len(tags)) if self.is_pronoun(tags[i][1])]
 		verbs = [(i, self.lemmatizer.lemmatize(tags[i][0], "v"), tags[i][1]) for i in range(len(tags)) if self.is_verb(tags[i][1])]
-
 		return entities, nouns, pronouns, verbs
 
 	def get_task_hints(self, verbs, entities, nouns, pronouns):
@@ -106,7 +105,12 @@ class NLParser:
 			best_entities = []
 			for action_name in candidate_action_names:
 				curr_entities = []
-				fit_entities_to_command(self.action_data.action_primitives[action_name], entities, [], curr_entities)
+				entities_copy = copy.copy(entities)
+				required_args = self.action_data.action_primitives[action_name]["argnames"]
+				missing_args = len(required_args) - len(entities_copy)
+				for i in range(max(0,missing_args)):
+					entities_copy.append((None, self.entity_data.get_null_entity()))
+				fit_entities_to_command(self.action_data.action_primitives[action_name], entities_copy, [], curr_entities)
 				if best_action_name is None or curr_entities.count("HOLE") < best_entities.count("HOLE"):
 					best_action_name = action_name
 					best_entities = curr_entities
@@ -121,14 +125,33 @@ class NLParser:
 			if "HOLE" in best_entities:
 				command_list = task_hints["half-commands"]
 			command_list.append(command)
+		print(task_hints)
 		return task_hints
+
+	def convert_speech_simple(self, sentence):
+		original_sentence = sentence.split()
+		contains_speech = False
+		for i, word in enumerate(original_sentence):
+			if word == "say" or word == "ask":
+				contains_speech = True
+				break
+		sentence = original_sentence[:i+1]
+		if contains_speech:
+			sentence.append(self.entity_data.get_entity("content", "$speech").name)
+		return " ".join(sentence), " ".join(original_sentence[i+1:])
 
 	def parse(self, text):
 		task_hints = []
 		# TODO: call GPT-3 to convert commands to speech
 		sentences = self.preprocess_text(text)
 		for sentence in sentences:
+			sentence, speech = self.convert_speech_simple(sentence)
 			entities, nouns, pronouns, verbs = self.tag_sentences(sentence)
-			task_hints.append(self.get_task_hints(verbs, entities, nouns, pronouns))
-			print(task_hints)
+			task_hint = self.get_task_hints(verbs, entities, nouns, pronouns)
+			for command in task_hint["commands"]:
+				if "speech" in command.args:
+					speech_ent = SpeechEntity("$speech", ["content"], speech)
+					self.entity_data.add_new_entity(speech_ent)
+					command.args["speech"] = ParamFilled(speech_ent)
+			task_hints.append(task_hint)
 		return task_hints

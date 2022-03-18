@@ -1,3 +1,5 @@
+import sys
+import argparse
 from simple_sketcher import *
 from nl_parser import *
 from planner import *
@@ -59,7 +61,11 @@ class Pipeline:
 
 if __name__ == "__main__":
 	import test_parser
-	nl, traj, world = test_parser.parse()
+	parser = argparse.ArgumentParser(description='The test interface for tabula.')
+	parser.add_argument('-f', '--file', type=str, required=True)
+	parser.add_argument('-o','--oracle', action='store_true', help='Replenish the oracle test cases with updated results', required=False)
+	args = vars(parser.parse_args())
+	nl, traj, world = test_parser.parse(args["file"])
 	pipeline = Pipeline()
 	pipeline.load_user_input(nl, traj)
 	pipeline.load_world(world)
@@ -67,3 +73,7 @@ if __name__ == "__main__":
 	pipeline.parse_nl()
 	pipeline.plan()
 	print(pipeline.program)
+	if args["oracle"]:
+		pipeline.program.write_result("test_files/oracle/{}.txt".format(args["file"][args["file"].rindex("/"):]))
+	else:
+		pipeline.program.write_result("test_files/temp/{}.txt".format(args["file"][args["file"].rindex("/"):]))

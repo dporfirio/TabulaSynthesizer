@@ -23,18 +23,13 @@
 			},
 			{
 				"name": "living room",
-				"objects": [
-					{
-						"name": "person",
-						"obejcts": []
-					}
-				]
+				"objects": []
 			}
 		]
 		
 	},
-	"nl": "say hello",
+	"nl": "Groceries. Kitchen.",
 	"trajectories": [
-						["living room"]
+						["garage", "kitchen", "garage"]
 					]
 }
