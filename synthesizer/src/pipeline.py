@@ -18,7 +18,7 @@ class Pipeline:
 	  - stores results of level 2 (synthesis) analysis
 	'''
 
-	def __init__(self):
+	def __init__(self, world):
 
 		# raw input data
 		self.raw_nl = None
@@ -34,6 +34,7 @@ class Pipeline:
 		self.sketch_data = None
 
 		# level 2 analysis
+		self.world_st = WorldState(world)
 		self.planner = Planner()
 
 		# level 2 data
@@ -42,9 +43,6 @@ class Pipeline:
 	def load_user_input(self, nl, traj):
 		self.raw_nl = nl
 		self.raw_traj = traj
-
-	def load_world(self, world):
-		self.world_st = WorldState(world)
 
 	def sketch(self):
 		self.sketch_data = self.traj_parser.sketch(self.raw_traj)
@@ -66,9 +64,8 @@ if __name__ == "__main__":
 	parser.add_argument('-o','--oracle', action='store_true', help='Replenish the oracle test cases with updated results', required=False)
 	args = vars(parser.parse_args())
 	nl, traj, world = test_parser.parse(args["file"])
-	pipeline = Pipeline()
+	pipeline = Pipeline(world)
 	pipeline.load_user_input(nl, traj)
-	pipeline.load_world(world)
 	pipeline.sketch()
 	pipeline.parse_nl()
 	pipeline.plan()

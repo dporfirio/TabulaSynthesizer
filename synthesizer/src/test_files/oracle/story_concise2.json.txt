@@ -1,0 +1,5 @@
+PROGRAM
+init: bedroom
+
+waypoint: bedroom
+  >> acts ACTION: say : ['Param:\n$speech']

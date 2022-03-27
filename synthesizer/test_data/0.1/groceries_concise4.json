@@ -54,8 +54,8 @@
 		}
 		
 	},
-	"nl": "Put the groceries away.",
+	"nl": "Put them in the cabinets.",
 	"trajectories": [
-						["living room"]
+						["garage", "kitchen", "garage"]
 					]
 }

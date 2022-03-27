@@ -39,8 +39,59 @@ class ActionData:
 
 class WorldState:
 
+	'''
+	Singleton Storage Class
+	'''
+	__instance = None
+
+	@staticmethod
+	def get_instance():
+		if WorldState.__instance is None:
+			print("ERROR: world state not initialized.")
+			exit()
+		return WorldState.__instance
+
 	def __init__(self, world):
 		self.world = world
+		self.fill_world()
+		WorldState.__instance = self
+
+	def fill_world(self):
+		'''
+		Each object in the world should store a reference to its parent.
+		Each object in the world should be directly accessible.
+		'''
+		regdata_to_scan = copy.copy(self.world["regions"])
+		for regstr, regdata in regdata_to_scan.items():
+			regdata["parent"] = ""
+			self.fill_world_helper(regdata)
+
+	def fill_world_helper(self, obj_data, parent=None):
+		if obj_data["name"] not in self.world["regions"]:
+			self.world["regions"][obj_data["name"]] = obj_data
+			obj_data["parent"] = parent
+
+		if len(obj_data["objects"]) == 0:
+			return
+
+		for obj in obj_data["objects"]:
+			self.fill_world_helper(obj, parent=obj_data["name"])
+
+	def is_entity_within_region(self, entstr, regstr):
+		obj_data = self.world["regions"][regstr]["objects"]
+		return self.find_nested_obj(obj_data, entstr)
+
+	def find_nested_obj(self, obj_data_list, entstr):
+		
+		in_inner_obj = False
+		for obj_data in obj_data_list:
+
+			# base case
+			if obj_data["name"] == entstr:
+				return True
+
+			in_inner_obj = in_inner_obj or self.find_nested_obj(obj_data["objects"], entstr)
+		return in_inner_obj
 
 
 class RobotState:
@@ -56,8 +107,67 @@ class RobotState:
 class Program:
 
 	def __init__(self):
+		self.reset()
+
+	def reset(self):
 		self.init_waypoint = None
 		self.waypoints = {}
+
+	def overwrite(self, act_seq):
+		self.reset()
+		curr_acts = []
+		wp = None
+		prev_wp_label = None
+		print(act_seq)
+		for i, act in enumerate(act_seq):
+			if act.name == "moveTo":
+				if wp is not None:
+					wp.postmove_actions = copy.copy(curr_acts)
+				self.add_waypoint_from_trace(act.args["destination"].label.name, prev_wp_label)
+				wp = self.waypoints[act.args["destination"].label.name]
+				if prev_wp_label is None:
+					self.init_waypoint = wp
+				prev_wp_label = wp.label
+				curr_acts.clear()
+			elif wp is None:
+				continue
+			elif i == len(act_seq) - 1:
+				curr_acts.append(act)
+				wp.postmove_actions = copy.copy(curr_acts)
+			else:
+				curr_acts.append(act)
+
+	def insert_new_waypoint(self, start_label, new_label, end_label):
+		print(start_label)
+		print(new_label)
+		print(end_label)
+		wp = Waypoint(new_label)
+		self.waypoints[new_label] = wp
+		# modify any existing fields as necessary
+		if start_label is not None and end_label is not None:
+			start_wp = self.waypoints[start_label]
+			end_wp = self.waypoints[end_label]
+			for ie in start_wp.if_execs:
+				if ie.is_same_trans(end_wp):
+					ie.waypoint = wp
+		elif start_label is not None:
+			# this will be for later
+			start_wp = self.waypoints[start_label]
+			start_wp.if_execs.append(IfExec(wp))
+		# set new wp fields
+		if end_label is not None:
+			end_wp = self.waypoints[end_label]
+			wp.if_execs.append(IfExec(end_wp))
+		# set init if necessary
+		if start_label is None:
+			self.init_waypoint = wp
+		return wp
+
+	def change_wp_label(self, wp, new_label):
+		old_label = wp.label
+		wp.label = new_label
+		del self.waypoints[old_label]
+		self.waypoints[new_label] = wp
 
 	def add_waypoint_from_trace(self, wp_label, prev_wp_label):
 		if wp_label not in self.waypoints:
@@ -120,6 +230,9 @@ class Condition:
 	def __init__(self, dnf):
 		self._or = dnf
 
+	def __str__(self):
+		return str(self._or)
+
 
 class ConditionHole:
 
@@ -166,27 +279,44 @@ class Action:
 		self.argnames = sorted(list(self.args.keys()))
 		self.precondition = self.create_action_conditions(action_data["preconditions"])
 		self.postcondition = self.create_action_conditions(action_data["postconditions"])
+		#print(self.name)
+		#print(self.postcondition)
 		self.verbsets = action_data["verbnet"]
 		self.synsets = action_data["synsets"]
 
 	def create_action_conditions(self, raw_conditions):
 		conditions = copy.copy(raw_conditions)
 		for condition_name, condition_val in raw_conditions.items():
-			# case 1: val is a string
+			# case 1: val is an int
 			if type(condition_val) == int:
 				argname = self.argnames[condition_val]
 				argval = self.args[argname]
-				conditions[condition_name] = argval
+				conditions[condition_name] = argval.label.name if argval.filled else condition_val
 		return Condition([conditions])
 
 	def is_superset(self, other):
+		'''
+		One action is a superset of another action if:
+			- they are equal
+			- the first action has holes that the other can fill
+			- a "destination" arg of the original action contains the "destination" of the other
+		'''
+		world_st = WorldState.get_instance()
 		if self.name != other.name:
 			return False
 		for arg, argval in self.args.items():
 			other_argval = other.args[arg]
 			if argval.hole:
 				continue
-			if not argval.label.equals(other_argval.label):
+			if arg == "destination":
+				#print(other_argval.label.name)
+				#print(argval.label.name)
+				#print(world_st.world)
+				#exit()
+				if other_argval.label.name != argval.label.name and\
+				   not world_st.is_entity_within_region(other_argval.label.name, argval.label.name):
+					return False
+			elif not argval.label.equals(other_argval.label):
 				return False
 		return True
 

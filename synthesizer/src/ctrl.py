@@ -11,7 +11,7 @@ class Controller:
 	def __init__(self):
 		rospy.init_node("synthesizer", anonymous=True)
 		rospy.Subscriber("synthesizer/recording", Recording, self.receive_recording, ())
-		self.pipeline = Pipeline()
+		self.pipeline = Pipeline({"regions": {}})
 		print("initialized synthesizer node")
 
 	def receive_recording(self, msg, args):
@@ -19,7 +19,7 @@ class Controller:
 		print(msg)
 		nl = msg.utt;
 		traj = [msg.trace]
-		pipeline = Pipeline()
+		pipeline = Pipeline({"regions": {}})
 		pipeline.load_user_input(nl, traj)
 		pipeline.load_world(world)
 		pipeline.sketch()

@@ -1,0 +1,5 @@
+PROGRAM
+init: person
+
+waypoint: person
+  >> acts ACTION: tell : ['Param:\nCinderella']

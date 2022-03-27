@@ -18,10 +18,6 @@
 					{
 						"name": "car",
 						"objects": [
-										{
-											"name": "groceries",
-											"objects": []
-										}
 									]
 					}
 				]
@@ -56,6 +52,6 @@
 	},
 	"nl": "Put the groceries away.",
 	"trajectories": [
-						["living room"]
+						["garage", "kitchen", "garage"]
 					]
 }

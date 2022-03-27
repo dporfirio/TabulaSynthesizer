@@ -92,19 +92,12 @@ class EntityData:
 		self.obj2category[entity] = categories
 
 	def get_entities(self, text):
-		print(text)
 		nonstandard_arr = text.split()
-		print(nonstandard_arr)
 		standard_arr = []
 		for word in nonstandard_arr:
 			standard_arr.append(self.stemmer.stem(word))
-			print(self.stemmer.stem(word))
 		text = " ".join(standard_arr)
-		print(text)
 		text = " {} ".format(text)
-		print(text)
-
-		# print("getting entities for {}".format(text))
 
 		def determine_entity_location(sentence, entity):
 
@@ -126,6 +119,7 @@ class EntityData:
 		for entity_class, entity_list in self.entities.items():
 			for entity in entity_list:
 				if " {} ".format(entity.standard_name) in text:
+					print("ADDING")
 					entities.append((determine_entity_location(text, "{} ".format(entity.standard_name)), entity, entity_class))
 
 		# discard entities that are subsets of other entities

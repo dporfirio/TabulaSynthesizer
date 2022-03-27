@@ -3,8 +3,10 @@
 	"living room": {"categories":["location", "room"],"class":"room","proper":false, "possessive":false},
 	"garage": {"categories":["location", "room"],"class":"room","proper":false, "possessive":false},
 	"kitchen": {"categories":["location", "room"],"class":"room","proper":false, "possessive":false},
+	"bedroom": {"categories":["location", "room"],"class":"room","proper":false, "possessive":false},
 	"groceries": {"categories":["grabbable","location"],"class":"item","proper":false, "possessive":false},
 	"countertop": {"categories":["location", "container", "wipeable"],"class":"furniture","proper":false, "possessive":false},
+	"cabinets": {"categories":["location", "container"],"class":"furniture","proper":false, "possessive":false},
 	"person": {"categories":["person","location"],"class":"Person","proper":false, "possessive":true},
 	"$speech":{"categories":["content"],"class":"Speech","proper":false, "possessive":false},
 
@@ -12,7 +14,6 @@
 	"Hamlet": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
 	"Paddington": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
 	"Lord of the Rings": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
-	"Snow White": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
 	"Cinderella": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
 	"Great Expectations": {"categories":["narrative"],"class":"Story","proper":true, "possessive":false},
 

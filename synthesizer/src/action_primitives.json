@@ -18,16 +18,16 @@
 	"grab": {
 		"argnames": ["item"],
 		"argtypes": ["grabbable"],
-		"preconditions": {"carryingItem": false},
-		"postconditions": {"carryingItem": true},
+		"preconditions": {"carryingItem": ""},
+		"postconditions": {"carryingItem": 0},
 		"verbnet": ["obtain-13.5.2","get-13.5.1"],
 		"synsets": ["grab.v.03","grab.v.05"]
 	},
 	"put": {
 		"argnames": ["item", "place"],
 		"argtypes": ["grabbable", "container"],
-		"preconditions": {"carryingItem": true},
-		"postconditions": {"carryingItem": false},
+		"preconditions": {"carryingItem": 0},
+		"postconditions": {"carryingItem": ""},
 		"verbnet": ["put-9.1","put_spatial-9.2","put_direction-9.4"],
 		"synsets": ["put.v.01","lodge.v.02"]
 	},
@@ -40,9 +40,9 @@
 		"synsets": ["state.v.01","allege.v.01","suppose.v.01","order.v.01","pronounce.v.01","say.v.08","say.v.09","say.v.11","ask.v.01","ask.v.02","ask.v.03","ask.v.04","ask.v.05","ask.v.07", "tell.v.03"]
 	},
 	"tell": {
-		"argnames": ["speech"],
+		"argnames": ["narrative"],
 		"argtypes": ["narrative"],
-		"preconditions": {"closeToPerson": true, "interruptable": false},
+		"preconditions": {"currLocation": "person", "interruptable": true},
 		"postconditions": {},
 		"verbnet": ["say-37.7","transfer_mesg-37.1.1","tell-37.2","manner_speaking-37.3","inquire-37.1.2","interrogate-37.1.3","transfer_mesg-37.1.1","tell-37.2","manner_speaking-37.3","talk-37.5","lecture-37.11"],
 		"synsets": ["state.v.01","allege.v.01","suppose.v.01","order.v.01","pronounce.v.01","say.v.08","say.v.09","say.v.11","ask.v.01","ask.v.02","ask.v.03","ask.v.04","ask.v.05","ask.v.07", "tell.v.03"]
@@ -51,7 +51,7 @@
 	"init": {
 		"canTravel": true,
 		"currLocation": "home base",
-		"carryingItem": false,
+		"carryingItem": "",
 		"interruptable": true,
 		"closeToPerson": false
 	}

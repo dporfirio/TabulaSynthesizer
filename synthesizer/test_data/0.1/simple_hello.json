@@ -1,6 +1,7 @@
 {
 	"world": {
-		"regions": [
+		"regions": {
+			"kitchen":
 			{
 				"name": "kitchen",
 				"objects": [
@@ -10,27 +11,47 @@
 					}
 				]
 			},
+			"garage":
 			{
 				"name": "garage",
 				"objects": [
 					{
 						"name": "car",
 						"objects": [
-										"groceries"
+										{
+											"name": "groceries",
+											"objects": []
+										}
 									]
 					}
 				]
 			},
+			"living room":
 			{
 				"name": "living room",
 				"objects": [
 					{
-						"name": "person",
-						"obejcts": []
+						"name": "countertop",
+						"objects": []
 					}
 				]
+			},
+			"bedroom":
+			{
+				"name": "bedroom",
+				"objects": [
+					{
+						"name": "person",
+						"objects": []
+					}
+				]
+			},
+			"home base":
+			{
+				"name": "home base",
+				"objects": []	
 			}
-		]
+		}
 		
 	},
 	"nl": "say hello",
