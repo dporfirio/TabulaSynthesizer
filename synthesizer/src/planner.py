@@ -213,8 +213,9 @@ class Planner:
 				act = Action(act_name, args)
 
 				# vet unparameterized speech
-				#if act_name == "say":
-				#	continue
+				if act_name == "say":
+					if type(args["speech"].label) != SpeechEntity:
+						continue
 
 				# vet move-to's that have already been seen twice in a row
 				'''
@@ -456,7 +457,39 @@ class Planner:
 		act_str = " : ".join([str(item) for item in curr[0]])
 		return val
 
-	def astar(self, start, act_seq, hint_list, detached_entities):
+	def solutions_contain_neighbor(self, neighbor, solutions):
+		'''
+		The purpose of this method is to make sure that any additional available solutions
+		are not duplicates of the first solution found. I.e., if the solution below exists,
+
+		           X - Y - Z - X - Y - Z
+
+		then the following additional solution should be prevented:
+
+		           X - Y - Z - X - Y - Z - X
+		'''
+		result = False
+		for solution in solutions:
+			temp_result = True
+			n_act_seq = neighbor[0]
+			act_seq = solution[0]
+			if len(n_act_seq) < len(act_seq):
+				continue
+			for i, n_act in enumerate(n_act_seq):
+				#print(n_act)
+				#print(act_seq[i])
+				if i >= len(act_seq):
+					break
+				if not n_act.equals(act_seq[i]):
+					temp_result = False
+					break
+			result = (result or temp_result)
+		#if result:
+		#	print("LSKADJFS")
+		#	exit()
+		return result
+
+	def astar(self, start, act_seq, hint_list, detached_entities, solutions):
 		open_set = [start]
 		came_from = {}
 		g_score = {}  # if an element is not here, the val is inf
@@ -474,7 +507,9 @@ class Planner:
 				print(act)
 			goal_sat, trace_idxs = self.goal_satisfied(current, act_seq, hint_list, detached_entities)
 			if goal_sat:
-				return self.reconstruct_path(came_from, current), trace_idxs
+				solutions.append((self.reconstruct_path(came_from, current), trace_idxs))
+				if len(solutions) > 2:
+					return #self.reconstruct_path(came_from, current), trace_idxs
 			open_set.remove(current)
 			# adhere to the length cap
 			# SIMPLE: length cap = len(act_seq)*3 with a minimum of 10
@@ -491,7 +526,12 @@ class Planner:
 			#time.sleep(1)
 			print("neighbors:")
 			for neighbor_data in neighbors:
+				# vet the neighbor.
+				# if there is already a solution that includes neighbor
+				# discard the neighbor
 				neighbor = neighbor_data[0]
+				if self.solutions_contain_neighbor(neighbor, solutions):
+					continue
 				obj_penalty = neighbor_data[1]
 			#	print(neighbor[0][-1])
 				tentative_g_score = g_score[current] + (0 if self.is_repeat_action(list(current[0]), neighbor) else (1 + obj_penalty))
@@ -505,7 +545,7 @@ class Planner:
 						open_set.sort(key=lambda x: f_score[x])
 			#	print(f_score[neighbor])
 			#print()
-		return None
+		return #None
 
 	def update_existing_wps(self, sketch, act_seq, wp_idxs, trace):
 		'''
@@ -582,7 +622,9 @@ class Planner:
 		#print(" : ".join([str(act) for act in act_seq]))
 		#print(" : ".join([str(act) for act in hint_list]))
 		start = ((ad.get_idle(),), tuple(key for key in sorted(list(ad.init.keys()))), tuple([ad.init[key] for key in sorted(list(ad.init.keys()))]))
-		return self.astar(start, act_seq, hint_list, detached_entities)
+		solutions = []
+		self.astar(start, act_seq, hint_list, detached_entities, solutions)
+		return solutions
 
 	def solve(self, trace, hints, sketch):
 		hint_seq = []
@@ -596,17 +638,13 @@ class Planner:
 		for hint_dict in hints:
 			if len(hint_dict["constraints"]) > 0:
 				detached_entities.append(hint_dict["constraints"][0][1])
-		act_seq, wp_idxs = self.solve_helper(trace, hint_seq, detached_entities)
-		print("SOLUTION")
-		print(" : ".join([str(act) for act in act_seq]))
+		solutions = self.solve_helper(trace, hint_seq, detached_entities)
 		print(sketch)
-		sketch.overwrite(act_seq)
+		for i, solution in enumerate(solutions):
+			act_seq = solution[0]
+			print("SOLUTION")
+			print(" : ".join([str(act) for act in act_seq]))
+			sketch.overwrite(act_seq)
+		sketch.overwrite(solutions[0][0])
 		#self.update_sketch(sketch, act_seq, wp_idxs, trace)
 		return sketch
-
-'''
-TODO: 
-- objects cannot be used if the robot is not at the object!
-- move_to's can be to the ROOM that is in the trace, or to an object within the room
-	- what to do with duplicate locations in a trace? (the length minimizer should take care of this...)
-'''

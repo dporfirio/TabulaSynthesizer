@@ -26,19 +26,28 @@ class EntityData:
 		self.entities = {}    # mapping entities to objects
 		self.obj2category = {}  # mapping objects to entities
 
-		# initialize the entities dict
-		entities = {}
-
+	def load_entities_from_file(self, filename="entities"):
 		# access the cmd json file
 		ent_file = None
 		dir_path = os.path.dirname(os.path.realpath(__file__))
-		with open("{}/entities.json".format(dir_path),"r") as infile:
+		with open("{}/{}.json".format(dir_path, filename),"r") as infile:
 			ent_file = json.load(infile)
 
 		if ent_file is None:
 			print("ERROR: could not file cmd_components file")
 			exit()
 
+		self.init(ent_file)
+
+	def update_available_entities(self, ent_file):
+		self.entities = {}
+		self.obj2category = {}
+		self.load_entities_from_file("non_object_entities")
+		self.init(ent_file)
+
+	def init(self, ent_file):
+		# initialize the entities dict
+		entities = {}
 		for obj, obj_dict in ent_file.items():
 			for category in obj_dict["categories"]:
 				if category not in entities:
@@ -55,11 +64,12 @@ class EntityData:
 					established_entities[obj] = Entity(obj, self.obj2category[obj], self.stemmer)
 				self.obj2category[obj].append(category)
 				self.entities[category].append(established_entities[obj])
+		print(self.entities)
 
 		# must add an extra
-		if "robot" in self.entities:
-			print("ERROR: duplicate robot entity")
-			exit()
+		#if "robot" in self.entities:
+		#	print("ERROR: duplicate robot entity")
+		#	exit()
 		self.entities["robot"] = [Entity("robot", ["robot"]), Entity("you", ["robot"])]
 
 	def get_entity_dict(self):

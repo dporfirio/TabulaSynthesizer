@@ -154,7 +154,8 @@ class NLParser:
 				command_list = task_hints["half-commands"]
 			command_list.append(command)
 		print(task_hints)
-		#exit()
+		print(task_hints["half-commands"][0])
+		exit()
 		return task_hints
 
 	def convert_speech_simple(self, sentence):

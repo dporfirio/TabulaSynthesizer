@@ -50,6 +50,8 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
    FILES
    Recording.msg
+   AvailableEntities.msg
+   Entity.msg
 #   Message2.msg
 )
 

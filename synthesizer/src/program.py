@@ -52,9 +52,12 @@ class WorldState:
 		return WorldState.__instance
 
 	def __init__(self, world):
+		self.init(world)
+		WorldState.__instance = self
+
+	def init(self, world):
 		self.world = world
 		self.fill_world()
-		WorldState.__instance = self
 
 	def fill_world(self):
 		'''
@@ -136,6 +139,7 @@ class Program:
 				wp.postmove_actions = copy.copy(curr_acts)
 			else:
 				curr_acts.append(act)
+		print(self)
 
 	def insert_new_waypoint(self, start_label, new_label, end_label):
 		print(start_label)
@@ -309,10 +313,6 @@ class Action:
 			if argval.hole:
 				continue
 			if arg == "destination":
-				#print(other_argval.label.name)
-				#print(argval.label.name)
-				#print(world_st.world)
-				#exit()
 				if other_argval.label.name != argval.label.name and\
 				   not world_st.is_entity_within_region(other_argval.label.name, argval.label.name):
 					return False

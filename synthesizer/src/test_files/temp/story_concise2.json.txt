@@ -2,4 +2,4 @@ PROGRAM
 init: bedroom
 
 waypoint: bedroom
-  >> acts ACTION: say : ['Param:\n$speech']
+  >> acts ACTION: say : ['Param:\n$speech'] : ACTION: idle : []
