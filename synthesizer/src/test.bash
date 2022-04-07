@@ -20,15 +20,33 @@ corr_count=0
 
 for f in $FILES; do
 	if [[ $reset_oracle == "reset" ]]; then
-		python3 pipeline.py -f $f -o > out.txt
+		python3 pipeline.py -f $f -o 1> out.txt 2> fail.txt
+		errmsg=`cat fail.txt`
+		if [[ $errmsg != "" ]]; then
+			cat fail.txt
+			bn=`basename $f`
+			echo ERROR $bn
+			echo Please fix and rerun ./test_bash.sh -r
+			exit 1
+		fi
 	else
-		python3 pipeline.py -f $f > out.txt
+		start=`date +%s.%N`
+		python3 pipeline.py -f $f 1> out.txt 2> fail.txt
+		end=`date +%s.%N`
 		bn=`basename $f`
 		ofile="./test_files/oracle/${bn}.txt"
 		tfile="./test_files/temp/${bn}.txt"
 		d=`diff $ofile $tfile`
-		if [[ $d == "" ]]; then
-			echo PASSED test $bn
+		errmsg=`cat fail.txt`
+		if [[ $errmsg != "" ]]; then
+			cat fail.txt
+			bn=`basename $f`
+			echo ERROR $bn
+			echo Stopping tests prematurely.
+			exit 1
+		elif [[ $d == "" ]]; then
+			runtime=$(echo "$end - $start" | bc -l)
+			echo PASSED test $bn \($runtime seconds\)
 			corr_count=$(($corr_count+1))	
 		else
 			echo FAILED test $bn

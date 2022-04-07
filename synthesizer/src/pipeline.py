@@ -18,15 +18,18 @@ class Pipeline:
 	  - stores results of level 2 (synthesis) analysis
 	'''
 
-	def __init__(self, world):
+	def __init__(self, world, local_load=False):
 
 		# raw input data
 		self.raw_nl = None
 		self.raw_traj = None
-		self.world_st = None
 
 		# level 1 analysis
 		self.nl_parser = NLParser()
+		if local_load:
+			self.nl_parser.entity_data.load_entities_from_file()
+		else:
+			self.nl_parser.entity_data.load_entities_from_file("non_object_entities")
 		self.traj_parser = SimpleSketcher()
 
 		# level 1 data 
@@ -39,6 +42,9 @@ class Pipeline:
 
 		# level 2 data
 		self.program = None
+
+	def reload_world(self, world):
+		self.world_st.init(world)
 
 	def load_user_input(self, nl, traj):
 		self.raw_nl = nl
@@ -56,6 +62,10 @@ class Pipeline:
 	def plan(self):
 		self.program = self.planner.plan(self.sketch_data, self.task_hints)
 
+	def update_available_entities(self, new_avail_ents):
+		print("Updating available entities.")
+		self.nl_parser.entity_data.update_available_entities(new_avail_ents)
+
 
 if __name__ == "__main__":
 	import test_parser
@@ -64,12 +74,12 @@ if __name__ == "__main__":
 	parser.add_argument('-o','--oracle', action='store_true', help='Replenish the oracle test cases with updated results', required=False)
 	args = vars(parser.parse_args())
 	nl, traj, world = test_parser.parse(args["file"])
-	pipeline = Pipeline(world)
+	pipeline = Pipeline(world, True)
 	pipeline.load_user_input(nl, traj)
 	pipeline.sketch()
 	pipeline.parse_nl()
 	pipeline.plan()
-	print(pipeline.program)
+	#print(pipeline.program)
 	if args["oracle"]:
 		pipeline.program.write_result("test_files/oracle/{}.txt".format(args["file"][args["file"].rindex("/"):]))
 	else:

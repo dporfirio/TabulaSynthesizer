@@ -74,7 +74,10 @@ class NLParser:
 		'''
 		Collect (1) commands, (2) half-commands [commands with missing entities], and (3) constraints [entities without a command]
 		Collect unparameterized commands (ucoms) by looking at each verb
-		TODO: make this a LOT more robust
+		
+		Structure of task_hints dataset:
+
+		{"commands": [(c1, OR c2, ...)], "half-commands": [c1, OR c2, ...], "constraints": [c1, c2, ...]}
 		'''
 
 		def remove_duplicate_entities(remaining_entities, entity):
@@ -122,7 +125,7 @@ class NLParser:
 				verb_classes = self.vnet3.classids(verb_data[1])
 				if any([cmd_verb in vc for vc in verb_classes for cmd_verb in cmd_data["verbnet"]]):
 					candidate_action_names.append(cmd_name)
-			best_action_name = None
+			best_action_names = None
 			best_entities = []
 			print(candidate_action_names)
 			for action_name in candidate_action_names:
@@ -135,27 +138,37 @@ class NLParser:
 				print(action_name)
 				print(entities_copy)
 				fit_entities_to_command(self.action_data.action_primitives[action_name], entities_copy, [], curr_entities)
-				if best_action_name is None or curr_entities.count("HOLE") < best_entities.count("HOLE"):
-					best_action_name = action_name
-					best_entities = curr_entities
-			for ent in best_entities:
-				to_remove = [unused_ent for unused_ent in task_hints["constraints"] if unused_ent[0] == ent[0]]
-				task_hints["constraints"] = list(set(task_hints["constraints"]).difference(set(to_remove)))
-			args = {}
-			if best_action_name is None:
+				if best_action_names is None or curr_entities.count("HOLE") < best_entities[0].count("HOLE"):
+					best_action_names = [action_name]
+					best_entities = [curr_entities]
+				elif best_action_names is not None and curr_entities.count("HOLE") == best_entities[0].count("HOLE"):
+					best_action_names.append(action_name)
+					best_entities.append(curr_entities)
+			for best_entity in best_entities:
+				for ent in best_entity:
+					to_remove = [unused_ent for unused_ent in task_hints["constraints"] if unused_ent[0] == ent[0]]
+					task_hints["constraints"] = list(set(task_hints["constraints"]).difference(set(to_remove)))
+			if best_action_names is None:
 				continue
-			print(best_action_name)
+			print(best_action_names)
 			print(best_entities)
-			for i, argname in enumerate(self.action_data.action_primitives[best_action_name]["argnames"]):
-				args[argname] = ParamFilled(best_entities[i][1]) if best_entities[i] != "HOLE" else ParamHole()
-			command = Action(best_action_name, args)
+			commands = []
+			for j, best_action_name in enumerate(best_action_names):
+				args = {}
+				for i, argname in enumerate(self.action_data.action_primitives[best_action_name]["argnames"]):
+					args[argname] = ParamFilled(best_entities[j][i][1]) if best_entities[j][i] != "HOLE" else ParamHole()
+				command = Action(best_action_name, args)
+				commands.append(command)
+			command_tup = tuple(commands)
 			command_list = task_hints["commands"]
-			if "HOLE" in best_entities:
+			if any(["HOLE" in best_entity for best_entity in best_entities]):
 				command_list = task_hints["half-commands"]
-			command_list.append(command)
-		print(task_hints)
-		print(task_hints["half-commands"][0])
-		exit()
+			command_list.append(command_tup)
+		#print(task_hints)
+		#print(task_hints["half-commands"][0])
+		#for hint in task_hints["half-commands"][0]:
+		#	print(hint)
+		#exit()
 		return task_hints
 
 	def convert_speech_simple(self, sentence):
@@ -181,10 +194,11 @@ class NLParser:
 			entities, nouns, pronouns, verbs = self.tag_sentences(sentence)
 			print(entities)
 			task_hint = self.get_task_hints(verbs, entities, nouns, pronouns)
-			for command in task_hint["commands"]:
-				if "speech" in command.args:
-					speech_ent = SpeechEntity("$speech", ["content"], speech)
-					self.entity_data.add_new_entity(speech_ent)
-					command.args["speech"] = ParamFilled(speech_ent)
+			for commands in task_hint["commands"]:
+				for command in commands:
+					if "speech" in command.args:
+						speech_ent = SpeechEntity("$speech", ["content"], speech)
+						self.entity_data.add_new_entity(speech_ent)
+						command.args["speech"] = ParamFilled(speech_ent)
 			task_hints.append(task_hint)
 		return task_hints

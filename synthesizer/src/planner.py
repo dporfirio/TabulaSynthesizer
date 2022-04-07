@@ -11,8 +11,9 @@ class Planner:
 		self.world_st = WorldState.get_instance()
 
 	def contains_double_loop(self, trace):
+		idx = -1
 		if len(trace) < 2:
-			return False
+			return False, idx
 		# test to see if the same loop exists twice
 		contains = False
 		for i in range(1,math.floor((len(trace)+1)/2)):
@@ -22,8 +23,9 @@ class Planner:
 			candidate_loop.reverse()
 			if test_loop == candidate_loop:
 				contains = True
+				idx = i
 				break
-		return contains
+		return contains, idx
 
 	def get_traces(self, curr_wp, holey_traces, curr_trace):
 		# analyze curr trace to see if it is a complete trace
@@ -32,8 +34,10 @@ class Planner:
 				holey_traces.append(curr_trace)
 			return
 		print("does this trace contain a double loop? {}".format(curr_trace))
-		if self.contains_double_loop(curr_trace):
+		contains, i = self.contains_double_loop(curr_trace)
+		if contains:
 			print("yes")
+			#curr_trace = curr_trace[:i+1]
 			if curr_trace not in holey_traces:
 				holey_traces.append(curr_trace)
 			return
@@ -46,8 +50,6 @@ class Planner:
 			self.get_traces(next_wp, holey_traces, updated_trace)
 
 	def plan(self, sketch, hints):
-		# collapse program into transition system
-		# this is done to convert the HTS to a TS
 
 		# get a SORTED list of ALL traces with holes (avoid multiple repeats of loops)
 		# we can trim prefixes before the first hole by enumerating all possible preconditions
@@ -108,15 +110,20 @@ class Planner:
 			return False
 
 		# get current "moveTo" and actions after the "moveTo"
-		curr_move_to = None
-		act_history = copy.copy(act_history)
-		act_history.reverse()
-		for i, act in enumerate(act_history):
-			if act.name == "moveTo":
-				curr_move_to = act
-				break
+		#print(new_act)
+		if new_act[0][-1].name == "moveTo":
+			curr_move_to = new_act[0][-1]
+			i = 0
+		else:
+			curr_move_to = None
+			act_history = copy.copy(act_history)
+			act_history.reverse()
+			for i, act in enumerate(act_history):
+				if act.name == "moveTo":
+					curr_move_to = act
+					break
 		if curr_move_to is None:
-			print("ERROR: must have a moveTo action in sequence of actions")
+			###print("ERROR: must have a moveTo action in sequence of actions")
 			exit()
 
 		# see if there is a previous "moveTo", determine expected action
@@ -128,7 +135,9 @@ class Planner:
 				break
 
 		if other_move_to is None:
+			print("{} is not repeat".format(act_history[0]))
 			return False
+		print("{} IS a repeat action".format(new_act))
 		return True
 
 	def find_previous_moveto(self, rev_act_history):
@@ -140,7 +149,7 @@ class Planner:
 				break
 			post_actions.append(act)
 		if curr_move_to is None:
-			print("warning: must have a moveTo action in sequence of actions")
+			###print("warning: must have a moveTo action in sequence of actions")
 			return Exception
 		return curr_move_to, post_actions, i
 
@@ -217,7 +226,7 @@ class Planner:
 					if type(args["speech"].label) != SpeechEntity:
 						continue
 
-				# vet move-to's that have already been seen twice in a row
+				# if we are in a loop and the solution is not already inside of the loop
 				'''
 				if act_name == "moveTo":
 					i = len(action_history) - 1
@@ -372,12 +381,13 @@ class Planner:
 		if curr_hint_idx < len(hint_list):
 			#print("curr hint: {}".format(hint_list[curr_hint_idx]))
 			#print("curr act: {}".format(curr_act))
-			curr_hint = hint_list[curr_hint_idx]
-			if curr_hint.is_superset(curr_act):
-				new_sat_counter = copy.copy(sat_counter)
-				new_sat_counter[0] += 1
-				sat = self.trace_satisfied_hints_helper(curr_act_idx + 1, curr_hint_idx + 1, act_history, hint_list, detached_tracker, new_sat_counter, scores)
-				result = result or sat
+			curr_hint_tuple = hint_list[curr_hint_idx]
+			for curr_hint in curr_hint_tuple:
+				if curr_hint.is_superset(curr_act):
+					new_sat_counter = copy.copy(sat_counter)
+					new_sat_counter[0] += 1
+					sat = self.trace_satisfied_hints_helper(curr_act_idx + 1, curr_hint_idx + 1, act_history, hint_list, detached_tracker, new_sat_counter, scores)
+					result = result or sat
 		args = list(curr_act.args.values())
 		args = [argval.label for argval in args]
 		#print(args)
@@ -428,7 +438,7 @@ class Planner:
 			#	hint_list_idx += 1
 		#if act_seq_idx == len(act_seq) and hint_list_idx == len(hint_list):
 		hint_sat, _ = self.trace_satisfies_hints(act_history, hint_list, detached_entities)
-		print("{} -- {}".format(hint_sat, act_seq_idx == len(act_seq)))
+		###print("{} -- {}".format(hint_sat, act_seq_idx == len(act_seq)))
 		if act_seq_idx == len(act_seq) and hint_sat:
 			return True, act_seq_idxs
 		return False, act_seq_idxs
@@ -498,6 +508,8 @@ class Planner:
 		f_score[start] = self.heuristic(start, act_seq, hint_list, detached_entities)
 		while len(open_set) > 0:
 			#time.sleep(0.1)
+			#if len(solutions) > 0:
+			#	time.sleep(1)
 			current = open_set[0]
 			print()
 			print("~~~~~~~~~~~~~~~")
@@ -507,6 +519,7 @@ class Planner:
 				print(act)
 			goal_sat, trace_idxs = self.goal_satisfied(current, act_seq, hint_list, detached_entities)
 			if goal_sat:
+				print("obtained solution {}".format(len(solutions)))
 				solutions.append((self.reconstruct_path(came_from, current), trace_idxs))
 				if len(solutions) > 2:
 					return #self.reconstruct_path(came_from, current), trace_idxs
@@ -627,6 +640,9 @@ class Planner:
 		return solutions
 
 	def solve(self, trace, hints, sketch):
+		for item in trace:
+			print(item["waypoint"])
+		#exit()
 		hint_seq = []
 		for hint_dict in hints:
 			hint_seq.extend(hint_dict["commands"])
@@ -639,11 +655,11 @@ class Planner:
 			if len(hint_dict["constraints"]) > 0:
 				detached_entities.append(hint_dict["constraints"][0][1])
 		solutions = self.solve_helper(trace, hint_seq, detached_entities)
-		print(sketch)
+		###print(sketch)
 		for i, solution in enumerate(solutions):
 			act_seq = solution[0]
-			print("SOLUTION")
-			print(" : ".join([str(act) for act in act_seq]))
+			###print("SOLUTION")
+			###print(" : ".join([str(act) for act in act_seq]))
 			sketch.overwrite(act_seq)
 		sketch.overwrite(solutions[0][0])
 		#self.update_sketch(sketch, act_seq, wp_idxs, trace)

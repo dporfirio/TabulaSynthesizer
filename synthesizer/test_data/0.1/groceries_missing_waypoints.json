@@ -1,0 +1,61 @@
+{
+	"world": {
+		"regions": {
+			"kitchen":
+			{
+				"name": "kitchen",
+				"objects": [
+					{
+						"name": "cabinets",
+						"objects": []
+					}
+				]
+			},
+			"garage":
+			{
+				"name": "garage",
+				"objects": [
+					{
+						"name": "car",
+						"objects": [
+										{
+											"name": "groceries",
+											"objects": []
+										}
+									]
+					}
+				]
+			},
+			"living room":
+			{
+				"name": "living room",
+				"objects": [
+					{
+						"name": "countertop",
+						"objects": []
+					}
+				]
+			},
+			"bedroom":
+			{
+				"name": "bedroom",
+				"objects": [
+					{
+						"name": "person",
+						"objects": []
+					}
+				]
+			},
+			"home base":
+			{
+				"name": "home base",
+				"objects": []	
+			}
+		}
+		
+	},
+	"nl": "Put the groceries away.",
+	"trajectories": [
+						["kitchen"]
+					]
+}

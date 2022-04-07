@@ -1,5 +1,5 @@
 PROGRAM
-init: bedroom
+init: person
 
-waypoint: bedroom
-  >> acts ACTION: say : ['Param:\n$speech'] : ACTION: idle : []
+waypoint: person
+  >> acts ACTION: tell : ['Param:\nThree Little Pigs']
