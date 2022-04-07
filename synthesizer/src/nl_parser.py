@@ -110,7 +110,9 @@ class NLParser:
 				action_data_argtype = action_data["argtypes"][len(curr_ordered_entities)]
 				_curr_ordered_entities = copy.copy(curr_ordered_entities)
 				val = "HOLE"
-				if action_data_argtype in entity[1].categories:
+				print(entity)
+				if action_data_argtype == entity[2]:
+					#print("VAL = ENTITY: {} (ada = {})".format(entity, action_data_argtype))
 					val = entity
 				_curr_ordered_entities.append(val)
 				_remaining_entities = copy.copy(remaining_entities)[:i]
@@ -134,7 +136,7 @@ class NLParser:
 				required_args = self.action_data.action_primitives[action_name]["argnames"]
 				missing_args = len(required_args) - len(entities_copy)
 				for i in range(max(0,missing_args)):
-					entities_copy.append((None, self.entity_data.get_null_entity()))
+					entities_copy.append((None, self.entity_data.get_null_entity(), "null"))
 				print(action_name)
 				print(entities_copy)
 				fit_entities_to_command(self.action_data.action_primitives[action_name], entities_copy, [], curr_entities)
