@@ -106,18 +106,25 @@ class NLParser:
 				if contains_more_entities(curr_ordered_entities, best_ordered_entities):
 					best_ordered_entities.clear()
 					best_ordered_entities.extend(curr_ordered_entities)
+			print("\n$$$$$$$$$$")
+			print("remaining_entities: {}".format(remaining_entities))
 			for i, entity in enumerate(remaining_entities):
+				if len(curr_ordered_entities) >= len(action_data["argtypes"]):
+					break
 				action_data_argtype = action_data["argtypes"][len(curr_ordered_entities)]
 				_curr_ordered_entities = copy.copy(curr_ordered_entities)
 				val = "HOLE"
+				print(_curr_ordered_entities)
 				print(entity)
+				print(action_data_argtype)
 				if action_data_argtype == entity[2]:
-					#print("VAL = ENTITY: {} (ada = {})".format(entity, action_data_argtype))
+					print("VAL = ENTITY: {} (ada = {})".format(entity, action_data_argtype))
 					val = entity
 				_curr_ordered_entities.append(val)
+				print(_curr_ordered_entities)
 				_remaining_entities = copy.copy(remaining_entities)[:i]
 				_remaining_entities.extend(remaining_entities[i + 1:])
-				remove_duplicate_entities(_remaining_entities, entity)
+				#remove_duplicate_entities(_remaining_entities, entity)
 				fit_entities_to_command(action_data, _remaining_entities, _curr_ordered_entities, best_ordered_entities)
 
 		task_hints = {"commands": [], "half-commands": [], "constraints": copy.copy(entities)}
@@ -146,12 +153,15 @@ class NLParser:
 				elif best_action_names is not None and curr_entities.count("HOLE") == best_entities[0].count("HOLE"):
 					best_action_names.append(action_name)
 					best_entities.append(curr_entities)
+			print("~~~~~~~~~~")
 			for best_entity in best_entities:
 				for ent in best_entity:
+					print(ent)
 					to_remove = [unused_ent for unused_ent in task_hints["constraints"] if unused_ent[0] == ent[0]]
 					task_hints["constraints"] = list(set(task_hints["constraints"]).difference(set(to_remove)))
 			if best_action_names is None:
 				continue
+			print("~~~~~~~~~~~")
 			print(best_action_names)
 			print(best_entities)
 			commands = []
@@ -166,7 +176,7 @@ class NLParser:
 			if any(["HOLE" in best_entity for best_entity in best_entities]):
 				command_list = task_hints["half-commands"]
 			command_list.append(command_tup)
-		#print(task_hints)
+		print(task_hints)
 		#print(task_hints["half-commands"][0])
 		#for hint in task_hints["half-commands"][0]:
 		#	print(hint)
