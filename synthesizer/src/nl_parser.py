@@ -1,14 +1,14 @@
+#!/usr/bin/env python3
+
 import spacy
 import nltk
 import copy
 import contractions
 import string
-import time
 from program import *
 from entities import *
 from wordnet_wrapper import *
 from nltk.parse.corenlp import CoreNLPParser
-import os
 
 nlp = spacy.load("en_core_web_sm")
 # from snips_nlu import SnipsNLUEngine
@@ -131,7 +131,7 @@ class NLParser:
 				print(_curr_ordered_entities)
 				_remaining_entities = copy.copy(remaining_entities)[:i]
 				_remaining_entities.extend(remaining_entities[i + 1:])
-				#remove_duplicate_entities(_remaining_entities, entity)
+				# remove_duplicate_entities(_remaining_entities, entity)
 				fit_entities_to_command(action_data, _remaining_entities, _curr_ordered_entities, best_ordered_entities)
 
 		task_hints = {"commands": [], "half-commands": [], "constraints": copy.copy(entities)}
@@ -149,7 +149,7 @@ class NLParser:
 				entities_copy = copy.copy(entities)
 				required_args = self.action_data.action_primitives[action_name]["argnames"]
 				missing_args = len(required_args) - len(entities_copy)
-				for i in range(max(0,missing_args)):
+				for i in range(max(0, missing_args)):
 					entities_copy.append((None, self.entity_data.get_null_entity(), "null"))
 				print(action_name)
 				print(entities_copy)
@@ -184,10 +184,10 @@ class NLParser:
 				command_list = task_hints["half-commands"]
 			command_list.append(command_tup)
 		print(task_hints)
-		#print(task_hints["half-commands"][0])
-		#for hint in task_hints["half-commands"][0]:
-		#	print(hint)
-		#exit()
+		# print(task_hints["half-commands"][0])
+		# for hint in task_hints["half-commands"][0]:
+		# 	print(hint)
+		# exit()
 		return task_hints
 
 	def convert_speech_simple(self, sentence):
@@ -197,17 +197,38 @@ class NLParser:
 			if word == "say" or word == "ask":
 				contains_speech = True
 				break
-		sentence = original_sentence[:i+1]
+		sentence = original_sentence[:i + 1]
 		if contains_speech:
 			sentence.append(self.entity_data.get_entity("content", "$speech").name)
-		return " ".join(sentence), " ".join(original_sentence[i+1:])
+		return " ".join(sentence), " ".join(original_sentence[i + 1:])
 
 	def parse(self, text):
 		task_hints = []
 
 		# STEP 1: parse input into individual commands and conditionals
-		parse = next(self.stanford_parser.raw_parse("When I arrive bring in the groceries"))
-		parse.pretty_print()
+		# mark the indices where an SBAR is
+		parse = next(self.stanford_parser.raw_parse(text))
+		sbar_positions = []
+		sbar_leaves = []
+		self.traverse_tree(parse, sbar_positions, sbar_leaves)
+
+		# convert sbar positions to character invervals
+		# character intervals DO NOT include spaces (i.e., s in "ab s" is position 2)
+		curr_char_pos = 0
+		in_sbar = False
+		char_intervals = []
+		in_progress_char_interval = None
+		for idx, leaf in enumerate(sbar_leaves):
+			if not in_sbar and idx in sbar_positions:
+				in_sbar = True
+				in_progress_char_interval = [curr_char_pos]
+			elif in_sbar and idx not in sbar_positions:
+				in_sbar = False
+				interval_end = curr_char_pos
+				in_progress_char_interval.append(interval_end)
+				char_intervals.append(tuple(in_progress_char_interval))
+			leaf_cc = len(leaf)
+			curr_char_pos += leaf_cc
 
 		# STEP 1.5: broadcast recording update containing command/conditional intervals
 		sentences = self.preprocess_text(text)
@@ -226,3 +247,16 @@ class NLParser:
 						command.args["speech"] = ParamFilled(speech_ent)
 			task_hints.append(task_hint)
 		return task_hints
+
+	def traverse_tree(self, tree, sbar_positions, sbar_leaves, curr_position=[0], in_sbar=False):
+		for subtree in tree:
+			if type(subtree) == nltk.tree.Tree:
+				if subtree.label() == "SBAR" or in_sbar:
+					self.traverse_tree(subtree, sbar_positions, sbar_leaves, curr_position, True)
+				else:
+					self.traverse_tree(subtree, sbar_positions, sbar_leaves, curr_position, False)
+			else:
+				sbar_leaves.append(subtree)
+				if in_sbar:
+					sbar_positions.append(curr_position[0])
+				curr_position[0] += 1
