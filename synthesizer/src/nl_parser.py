@@ -3,9 +3,13 @@ import nltk
 import copy
 import contractions
 import string
+import time
 from program import *
 from entities import *
 from wordnet_wrapper import *
+from nltk.parse.corenlp import CoreNLPParser
+import os
+
 nlp = spacy.load("en_core_web_sm")
 # from snips_nlu import SnipsNLUEngine
 # from snips_nlu.default_configs import CONFIG_EN
@@ -19,6 +23,9 @@ class NLParser:
 		self.lemmatizer = nltk.stem.wordnet.WordNetLemmatizer()
 		self.ww = WordnetWrapper()
 		self.vnet3 = nltk.corpus.util.LazyCorpusLoader('verbnet3', nltk.corpus.reader.verbnet.VerbnetCorpusReader,r'(?!\.).*\.xml')
+
+		# corenlp
+		self.stanford_parser = CoreNLPParser("http://localhost:9000")
 
 	def preprocess_text(self, text):
 		# convert everything to lowercase
@@ -197,7 +204,12 @@ class NLParser:
 
 	def parse(self, text):
 		task_hints = []
-		# TODO: call GPT-3 to convert commands to speech
+
+		# STEP 1: parse input into individual commands and conditionals
+		parse = next(self.stanford_parser.raw_parse("When I arrive bring in the groceries"))
+		parse.pretty_print()
+
+		# STEP 1.5: broadcast recording update containing command/conditional intervals
 		sentences = self.preprocess_text(text)
 		for sentence in sentences:
 			sentence, speech = self.convert_speech_simple(sentence)

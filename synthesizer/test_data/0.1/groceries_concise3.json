@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "Put them away.",
+	"nl": ["Put them away."],
 	"trajectories": [
 						["garage", "kitchen", "garage"]
 					]

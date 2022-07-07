@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "Cinderella.",
+	"nl": ["Cinderella."],
 	"trajectories": [
 						["bedroom"]
 					]

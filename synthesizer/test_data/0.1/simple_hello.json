@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "say hello",
+	"nl": ["say hello"],
 	"trajectories": [
 						["living room"]
 					]

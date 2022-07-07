@@ -75,10 +75,11 @@ if __name__ == "__main__":
 	args = vars(parser.parse_args())
 	nl, traj, world = test_parser.parse(args["file"])
 	pipeline = Pipeline(world, True)
-	pipeline.load_user_input(nl, traj)
-	pipeline.sketch()
-	pipeline.parse_nl()
-	pipeline.plan()
+	for indiv_nl, indiv_traj in zip(nl, traj):
+		pipeline.load_user_input(indiv_nl, indiv_traj)
+		pipeline.sketch()
+		pipeline.parse_nl()
+		pipeline.plan()
 	#print(pipeline.program)
 	if args["oracle"]:
 		pipeline.program.write_result("test_files/oracle/{}.txt".format(args["file"][args["file"].rindex("/"):]))

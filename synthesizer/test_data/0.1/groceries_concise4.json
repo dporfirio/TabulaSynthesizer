@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "Put them in the cabinets.",
+	"nl": ["Put them in the cabinets."],
 	"trajectories": [
 						["garage", "kitchen", "garage"]
 					]

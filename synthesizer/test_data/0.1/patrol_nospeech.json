@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "",
+	"nl": [""],
 	"trajectories": [
 						["garage", "kitchen", "living room", "bedroom", "garage"]
 					]

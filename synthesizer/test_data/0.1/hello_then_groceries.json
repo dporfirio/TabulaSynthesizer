@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "Say hello. Put the groceries away.",
+	"nl": ["Say hello. Put the groceries away."],
 	"trajectories": [
 						["kitchen", "garage", "kitchen"]
 					]

@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "Get groceries.",
+	"nl": ["Get groceries."],
 	"trajectories": [
 						["garage", "kitchen", "garage"]
 					]

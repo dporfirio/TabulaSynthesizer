@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "Put the groceries away.",
+	"nl": ["Put the groceries away."],
 	"trajectories": [
 						["living room"]
 					]

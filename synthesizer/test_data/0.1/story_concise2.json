@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "Tell a story.",
+	"nl": ["Tell a story."],
 	"trajectories": [
 						["bedroom"]
 					]

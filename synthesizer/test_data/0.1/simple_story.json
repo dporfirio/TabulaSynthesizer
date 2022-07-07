@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "tell the story of Cinderella",
+	"nl": ["tell the story of Cinderella"],
 	"trajectories": [
 						["bedroom"]
 					]

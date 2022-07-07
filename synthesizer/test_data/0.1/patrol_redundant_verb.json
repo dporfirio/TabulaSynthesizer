@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": "Move around the house.",
+	"nl": ["Move around the house."],
 	"trajectories": [
 						["garage", "kitchen", "living room", "bedroom", "garage"]
 					]

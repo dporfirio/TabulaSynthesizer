@@ -54,8 +54,10 @@
 		}
 		
 	},
-	"nl": ["Patrol the house."],
+	"nl": ["Put the groceries away.",
+		   "Stop when I say exit."],
 	"trajectories": [
-						["garage", "kitchen", "living room", "bedroom", "garage"]
+						["garage", "kitchen", "garage"],
+						["garage", "home base"]
 					]
 }
