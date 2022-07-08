@@ -1,0 +1,209 @@
+---
+  world:
+    change_params:
+      directly_editable: true
+      activateable: false
+      confirm_or_add: false
+      rearrange: false
+    delete_params:
+      deletable: false
+      wipe_subtree: false
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: ""
+    children:
+      - program
+  program:
+    change_params:
+      directly_editable: false
+      activateable: false
+      confirm_or_add: false
+      rearrange: false
+    delete_params:
+      deletable: false
+      wipe_subtree: false
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: world
+    children:
+      - ltl_property
+      - recording
+  ltl_property:
+    change_params:
+      directly_editable: false
+      activateable: true
+      confirm_or_add: false
+      rearrange: false
+    delete_params:
+      deletable: false
+      wipe_subtree: false
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: program
+    children: []
+  recording:
+    change_params:
+      directly_editable: false
+      activateable: false
+      confirm_or_add: false
+      rearrange: false
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: true
+      wipe_subtree: true
+    parent: program
+    children:
+      - user_sequence
+  user_sequence:
+    change_params:
+      directly_editable: true
+      activateable: false
+      confirm_or_add: false
+      rearrange: false
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: true
+      wipe_subtree: true
+    parent: recording
+    children:
+      - waypoint_sequence
+  waypoint_sequence:
+    change_params:
+      directly_editable: false
+      activateable: false
+      confirm_or_add: false
+      rearrange: false
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: user_sequence
+    children:
+      - waypoint
+  waypoint:
+    change_params:
+      directly_editable: false
+      activateable: false
+      confirm_or_add: true
+      rearrange: false
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: waypoint_sequence
+    children:
+      - task_subsequence
+  task_subsequence:
+    change_params:
+      directly_editable: false
+      activateable: false
+      confirm_or_add: false
+      rearrange: true
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: waypoint
+    children:
+      - command
+      - conditional
+      - jump_point
+  command:
+    change_params:
+      directly_editable: false
+      activateable: false
+      confirm_or_add: true
+      rearrange: false
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: task_subsequence
+    children: []
+  conditional:
+    change_params:
+      directly_editable: false
+      activateable: false
+      confirm_or_add: true
+      rearrange: false
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: task_subsequence
+    children: []
+  jump_point:
+    change_params:
+      directly_editable: false
+      activateable: false
+      confirm_or_add: true
+      rearrange: false
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: task_subsequence
+    children: []
+  content:
+    change_params:
+      directly_editable: true
+      activateable: false
+      confirm_or_add: false
+      rearrange: false
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: true
+      wipe_subtree: true
+    parent: recording
+    children:
+      - label_interval
+  label_interval:
+    change_params:
+      directly_editable: true
+      activateable: false
+      confirm_or_add: false
+      rearrange: false
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: content
+    children:
+      - label
+  label:
+    change_params:
+      directly_editable: true
+      activateable: false
+      confirm_or_add: false
+      rearrange: false
+    delete_params:
+      deletable: true
+      wipe_subtree: true
+    redo_params:
+      redoable: false
+      wipe_subtree: false
+    parent: label_interval
+    children: []
