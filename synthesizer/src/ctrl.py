@@ -72,9 +72,6 @@ class Controller:
 			self.create_world_dict_helper(region["objects"], world["regions"][name]["objects"])
 		self.pipeline.reload_world(world)
 		self.pipeline.load_user_input(nl, traj)
-		self.pipeline.sketch()
-		self.pipeline.parse_nl()
-		self.pipeline.plan()
 		print(self.pipeline.program)
 
 	def create_world_dict_helper(self, raw_objects, objects):

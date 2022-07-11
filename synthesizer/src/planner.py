@@ -2,13 +2,17 @@ import copy
 import math
 import itertools
 import time
+from world import *
 from program import *
+from recording import Action, ParamFilled
+from recording import ActionData
+from entities import EntityData, SpeechEntity
 
 
 class Planner:
 
 	def __init__(self):
-		self.world_st = WorldState.get_instance()
+		self.world_st = World.get_instance()
 		self.available_actions = ActionData.get_instance()
 		self.available_entities = EntityData.get_instance()
 
@@ -51,12 +55,11 @@ class Planner:
 			updated_trace.append(next_wp)
 			self.get_traces(next_wp, holey_traces, updated_trace)
 
-	def plan(self, sketch, hints):
-
+	def plan(self, recording):
 		# get a SORTED list of ALL traces with holes (avoid multiple repeats of loops)
 		# we can trim prefixes before the first hole by enumerating all possible preconditions
 		holey_wp_traces = []
-		init_wp = sketch.init_waypoint
+		init_wp = recording.partial_program.init_waypoint
 		self.get_traces(init_wp, holey_wp_traces, [init_wp])
 		holey_traces = []
 		for holey_wp_trace in holey_wp_traces:
@@ -70,7 +73,7 @@ class Planner:
 			holey_traces.append(holey_trace)
 		holey_traces.sort(key=len)  # from smallest to largest
 		print(holey_traces)
-
+		
 		# best_solution = None
 		# bad solutions = []
 		# n = 1
@@ -84,7 +87,7 @@ class Planner:
 			# find solution for n traces (avoiding previous bad solutions), prioritizing the traces that have the MOST holes
 			traces = holey_traces[:n]
 			print(traces[0])
-			solution = self.solve(traces[0], hints, sketch)
+			solution = self.solve(traces[0], recording.get_task_hints())
 
 			# evaluate solution on ALL (non-n) traces
 			# todo: UNCOMMENT FOR FASTER SOLVING
@@ -620,70 +623,6 @@ class Planner:
 			#print()
 		return #None
 
-	def update_existing_wps(self, sketch, act_seq, wp_idxs, trace):
-		'''
-		For each wp in the trace:
-			- if not yet confirmed:
-				- change if necessary
-				- confirm
-			- elif confirmed
-				- if not necessary to change, do nothing
-				- else, make a new waypoint, insert it in trace as necessary
-		'''
-		confirmed = {}
-		for wp_dict in trace:
-			confirmed[wp_dict["waypoint"]] = False
-		
-		prev_wp = None
-		for i, wp_dict in enumerate(trace):
-			wp = wp_dict["waypoint"]
-			wp_idx = wp_idxs[i]
-			change_name = act_seq[wp_idx].args["destination"].label.name
-			if not confirmed[wp]:
-				sketch.change_wp_label(wp, change_name)
-				confirmed[wp] = True
-			else:
-				if change_name != wp.label:
-					nxt_wp = trace[i+1]["waypoint"].label if len(trace)> i+1 else None
-					sketch.insert_new_waypoint(prev_wp.label, change_name, nxt_wp)
-			prev_wp = wp
-
-
-	def update_sketch(self, sketch, act_seq, wp_idxs, trace):
-		self.update_existing_wps(sketch, act_seq, wp_idxs, trace)
-		curr_acts = []
-		wp = None
-		prev_move_label = None
-		for i, act in enumerate(act_seq):
-			if act.name == "moveTo":
-				if wp is None:
-					if act.args["destination"].label.name in sketch.waypoints:
-						wp = sketch.waypoints[act.args["destination"].label.name]
-					else:
-						# look to the future...
-						end_wp_label = None
-						for j in range(i+1, len(act_seq)):
-							nxt_act = act_seq[j]
-							if nxt_act.name == "moveTo":
-								end_wp_label = nxt_act.args["destination"].label.name
-								break
-						wp = sketch.insert_new_waypoint(prev_move_label, act.args["destination"].label.name, end_wp_label)
-					prev_move_label = wp.label
-					curr_acts.clear()
-					continue
-				#if i == len(act_seq) - 1:
-				#	curr_acts.append(act)
-				wp_acts = wp.postmove_actions
-				wp.postmove_actions = copy.copy(curr_acts)
-				curr_acts.clear()
-				wp = sketch.waypoints[act.args["destination"].label.name]
-			elif i == len(act_seq) - 1:
-				curr_acts.append(act)
-				wp_acts = wp.postmove_actions
-				wp.postmove_actions = copy.copy(curr_acts)
-			else:
-				curr_acts.append(act)
-
 	def solve_helper(self, trace, hint_list, detached_entities):
 		ad = ActionData.get_instance()
 		act_seq = []
@@ -699,7 +638,7 @@ class Planner:
 		self.astar(start, act_seq, hint_list, detached_entities, solutions)
 		return solutions
 
-	def solve(self, trace, hints, sketch):
+	def solve(self, trace, hints):
 		for item in trace:
 			print(item["waypoint"])
 		hint_seq = []
@@ -715,11 +654,11 @@ class Planner:
 				detached_entities.append(hint_dict["constraints"][0][1])
 		solutions = self.solve_helper(trace, hint_seq, detached_entities)
 		###print(sketch)
-		for i, solution in enumerate(solutions):
-			act_seq = solution[0]
+		###for i, solution in enumerate(solutions):
+			###act_seq = solution[0]
 			###print("SOLUTION")
 			###print(" : ".join([str(act) for act in act_seq]))
-			sketch.overwrite(act_seq)
-		sketch.overwrite(solutions[0][0])
-		#self.update_sketch(sketch, act_seq, wp_idxs, trace)
-		return sketch
+			###sketch.overwrite(act_seq)
+		###sketch.overwrite(solutions[0][0])
+		###return sketch
+		return solutions[0][0]

@@ -6,6 +6,8 @@ import copy
 import contractions
 import string
 from program import *
+from recording import ParamFilled, ParamHole, Action
+from recording import ActionData
 from entities import *
 from wordnet_wrapper import *
 from nltk.parse.corenlp import CoreNLPParser
@@ -203,6 +205,9 @@ class NLParser:
 		return " ".join(sentence), " ".join(original_sentence[i + 1:])
 
 	def parse(self, text):
+		# STEP 0: return empty if there is no text
+		if text == "":
+			return []
 		task_hints = []
 
 		# STEP 1: parse input into individual commands and conditionals
