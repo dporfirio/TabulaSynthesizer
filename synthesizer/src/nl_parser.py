@@ -38,18 +38,20 @@ class NLParser:
 
 		# remove punctuation
 		# col 1: split string
-		a_list = nltk.tokenize.sent_tokenize(text)
+		#a_list = nltk.tokenize.sent_tokenize(text)
 
 		# col 2:
-		b_list = [] 
+		#b_list = [] 
 		table = str.maketrans('', '', string.punctuation)
-		for sent in a_list:
-			words = sent.split()
-			stripped = [w.translate(table) for w in words]
-			processed_sent = " ".join(stripped)
-			b_list.append(processed_sent.lower())
+		#for sent in a_list:
+		words = text.split()
+		#words = sent.split()
+		stripped = [w.translate(table) for w in words]
+		processed_sent = " ".join(stripped)
+		#b_list.append(processed_sent.lower())
 
-		return b_list
+		#return b_list
+		return processed_sent.lower()
 
 	def is_noun(self, tag):
 		if tag == "NN" or tag == "NNS" or tag == "NNP" or tag == "NNPS":
@@ -115,22 +117,15 @@ class NLParser:
 				if contains_more_entities(curr_ordered_entities, best_ordered_entities):
 					best_ordered_entities.clear()
 					best_ordered_entities.extend(curr_ordered_entities)
-			print("\n$$$$$$$$$$")
-			print("remaining_entities: {}".format(remaining_entities))
 			for i, entity in enumerate(remaining_entities):
 				if len(curr_ordered_entities) >= len(action_data["argtypes"]):
 					break
 				action_data_argtype = action_data["argtypes"][len(curr_ordered_entities)]
 				_curr_ordered_entities = copy.copy(curr_ordered_entities)
 				val = "HOLE"
-				print(_curr_ordered_entities)
-				print(entity)
-				print(action_data_argtype)
 				if action_data_argtype == entity[2]:
-					print("VAL = ENTITY: {} (ada = {})".format(entity, action_data_argtype))
 					val = entity
 				_curr_ordered_entities.append(val)
-				print(_curr_ordered_entities)
 				_remaining_entities = copy.copy(remaining_entities)[:i]
 				_remaining_entities.extend(remaining_entities[i + 1:])
 				# remove_duplicate_entities(_remaining_entities, entity)
@@ -138,6 +133,7 @@ class NLParser:
 
 		task_hints = {"commands": [], "half-commands": [], "constraints": copy.copy(entities)}
 		for verb_data in verbs:
+			print("\n\nVERB DATA: {}".format(verb_data))
 			candidate_action_names = []
 			for cmd_name, cmd_data in self.action_data.action_primitives.items():
 				verb_classes = self.vnet3.classids(verb_data[1])
@@ -187,7 +183,9 @@ class NLParser:
 			command_list.append(command_tup)
 		print(task_hints)
 		# print(task_hints["half-commands"][0])
-		# for hint in task_hints["half-commands"][0]:
+		#for hint in task_hints["commands"]:
+		# 	print(hint[0])
+		#for hint in task_hints["half-commands"][0]:
 		# 	print(hint)
 		# exit()
 		return task_hints
@@ -195,6 +193,7 @@ class NLParser:
 	def convert_speech_simple(self, sentence):
 		original_sentence = sentence.split()
 		contains_speech = False
+		print(original_sentence)
 		for i, word in enumerate(original_sentence):
 			if word == "say" or word == "ask":
 				contains_speech = True
@@ -204,46 +203,79 @@ class NLParser:
 			sentence.append(self.entity_data.get_entity("content", "$speech").name)
 		return " ".join(sentence), " ".join(original_sentence[i + 1:])
 
-	def parse(self, text):
+	def get_text_from_interval(self, interval, text):
+		i = 0
+		substring = ""
+		active = False
+		for char in text:
+			if i == interval[0]:
+				active = True
+			elif i == interval[1]:
+				active = False
+			if active:
+				substring += char
+			if char != " ":
+				i += 1
+		return substring
+
+	def parse(self, raw_text):
 		# STEP 0: return empty if there is no text
-		if text == "":
+		if raw_text == "":
 			return []
 		task_hints = []
 
-		# STEP 1: parse input into individual commands and conditionals
-		# mark the indices where an SBAR is
-		parse = next(self.stanford_parser.raw_parse(text))
-		sbar_positions = []
-		sbar_leaves = []
-		self.traverse_tree(parse, sbar_positions, sbar_leaves)
-
-		# convert sbar positions to character invervals
-		# character intervals DO NOT include spaces (i.e., s in "ab s" is position 2)
+		# STEP 0: split into individual sentences. Go thru each individual sentence.
+		sentence_text = nltk.sent_tokenize(raw_text)
 		curr_char_pos = 0
-		in_sbar = False
 		char_intervals = []
-		in_progress_char_interval = None
-		for idx, leaf in enumerate(sbar_leaves):
-			if not in_sbar and idx in sbar_positions:
-				in_sbar = True
-				in_progress_char_interval = [curr_char_pos]
-			elif in_sbar and idx not in sbar_positions:
-				in_sbar = False
-				interval_end = curr_char_pos
-				in_progress_char_interval.append(interval_end)
-				char_intervals.append(tuple(in_progress_char_interval))
-			leaf_cc = len(leaf)
-			curr_char_pos += leaf_cc
+		print(sentence_text)
+		for text in sentence_text:
+
+			# STEP 1: parse input into individual commands and conditionals
+			# mark the indices where an SBAR is
+			print("Parsing \'{}\'".format(text))
+			parse = next(self.stanford_parser.raw_parse(text))
+			parse.pretty_print()
+			sbar_positions = []
+			sbar_leaves = []
+			self.traverse_tree(parse, sbar_positions, sbar_leaves, [0])
+			#print(sbar_positions)
+
+			# convert sbar positions to character invervals
+			# character intervals DO NOT include spaces (i.e., s in "ab s" is position 2)
+			in_sbar = False
+			prev_interval_end = curr_char_pos
+			in_progress_char_interval = None
+			for idx, leaf in enumerate(sbar_leaves):
+				if not in_sbar and idx in sbar_positions:
+					in_sbar = True
+					in_progress_char_interval = [curr_char_pos]
+					char_intervals.append({"interval": (prev_interval_end, curr_char_pos), "classification": "command", "text": self.get_text_from_interval((prev_interval_end, curr_char_pos), raw_text)})
+				elif in_sbar and idx not in sbar_positions:
+					in_sbar = False
+					prev_interval_end = curr_char_pos
+					in_progress_char_interval.append(prev_interval_end)
+					char_intervals.append({"interval": tuple(in_progress_char_interval), "classification": "conditional", "text": self.get_text_from_interval((in_progress_char_interval[0], in_progress_char_interval[1]), raw_text)})
+				leaf_cc = len(leaf)
+				curr_char_pos += leaf_cc
+			char_intervals.append({"interval": (prev_interval_end, curr_char_pos), "classification": "conditional" if in_sbar else "command", "text": self.get_text_from_interval((prev_interval_end, curr_char_pos), raw_text)})
 
 		# STEP 1.5: broadcast recording update containing command/conditional intervals
-		sentences = self.preprocess_text(text)
-		for sentence in sentences:
+		# work around both sentences and intervals
+
+		for interval_data in char_intervals:
+			sentence = self.preprocess_text(interval_data["text"])
+			if len(sentence) == 0:
+				continue
 			sentence, speech = self.convert_speech_simple(sentence)
 			print(sentence)
 			print(speech)
 			entities, nouns, pronouns, verbs = self.tag_sentences(sentence)
 			print(entities)
 			task_hint = self.get_task_hints(verbs, entities, nouns, pronouns)
+			# discard empty hints
+			if len(task_hint["commands"]) == 0 and len(task_hint["half-commands"]) == 0 and len(task_hint["constraints"]) == 0:
+				continue
 			for commands in task_hint["commands"]:
 				for command in commands:
 					if "speech" in command.args:
@@ -251,9 +283,27 @@ class NLParser:
 						self.entity_data.add_new_entity(speech_ent)
 						command.args["speech"] = ParamFilled(speech_ent)
 			task_hints.append(task_hint)
+		for task_hint in task_hints:
+			print()
+			print("commands")
+			for cmd in task_hint["commands"]:
+				for c in cmd:
+					print(c)
+
+			print("half commands")
+			for half_cmd in task_hint["half-commands"]:
+				for hc in half_cmd:
+					print(hc)
+
+			print("constraints")
+			for const in task_hint["constraints"]:
+				for c in const:
+					print(c)
+		print(task_hints)
+		#exit()
 		return task_hints
 
-	def traverse_tree(self, tree, sbar_positions, sbar_leaves, curr_position=[0], in_sbar=False):
+	def traverse_tree(self, tree, sbar_positions, sbar_leaves, curr_position, in_sbar=False):
 		for subtree in tree:
 			if type(subtree) == nltk.tree.Tree:
 				if subtree.label() == "SBAR" or in_sbar:
@@ -261,6 +311,7 @@ class NLParser:
 				else:
 					self.traverse_tree(subtree, sbar_positions, sbar_leaves, curr_position, False)
 			else:
+				#print("LEAF: {}, in_sbar? {}, pos: {}".format(subtree, in_sbar, curr_position[0]))
 				sbar_leaves.append(subtree)
 				if in_sbar:
 					sbar_positions.append(curr_position[0])

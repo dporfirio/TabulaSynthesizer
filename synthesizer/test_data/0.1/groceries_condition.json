@@ -54,7 +54,7 @@
 		}
 		
 	},
-	"nl": ["when tomorrow doesn't come don't put the groceries away when I say exit."],
+	"nl": ["Say hello. Then when tomorrow doesn't come don't put the groceries away when I say exit."],
 	"trajectories": [
 						["garage", "kitchen", "garage"]
 					]
