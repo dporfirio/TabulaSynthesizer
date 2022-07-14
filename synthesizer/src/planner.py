@@ -39,10 +39,10 @@ class Planner:
 			if curr_trace not in holey_traces:
 				holey_traces.append(curr_trace)
 			return
-		print("does this trace contain a double loop? {}".format(curr_trace))
+		#print("does this trace contain a double loop? {}".format(curr_trace))
 		contains, i = self.contains_double_loop(curr_trace)
 		if contains:
-			print("yes")
+			#print("yes")
 			#curr_trace = curr_trace[:i+1]
 			if curr_trace not in holey_traces:
 				holey_traces.append(curr_trace)
@@ -72,7 +72,7 @@ class Planner:
 				holey_trace.append(temp)
 			holey_traces.append(holey_trace)
 		holey_traces.sort(key=len)  # from smallest to largest
-		print(holey_traces)
+		#print(holey_traces)
 		
 		# best_solution = None
 		# bad solutions = []
@@ -86,7 +86,7 @@ class Planner:
 
 			# find solution for n traces (avoiding previous bad solutions), prioritizing the traces that have the MOST holes
 			traces = holey_traces[:n]
-			print(traces[0])
+			#print(traces[0])
 			solution = self.solve(traces[0], recording.get_task_hints())
 
 			# evaluate solution on ALL (non-n) traces
@@ -105,7 +105,7 @@ class Planner:
 				#bad_solution.append(...)
 				#n += 1
 				# temporarily, just re-return the unfilled sketch for manual-filling
-				print("returning sketch")
+				#print("returning sketch")
 				best_solution = sketch
 
 		return best_solution
@@ -140,9 +140,9 @@ class Planner:
 				break
 
 		if other_move_to is None:
-			print("{} is not repeat".format(act_history[0]))
+			#print("{} is not repeat".format(act_history[0]))
 			return False
-		print("{} IS a repeat action".format(new_act))
+		#print("{} IS a repeat action".format(new_act))
 		return True
 
 	def find_previous_moveto(self, rev_act_history):
@@ -192,9 +192,34 @@ class Planner:
 			return True
 		return False
 
+	def contains_triple_loop(self, current):
+		act_history = current[0]
+		act_history = [str(ah) for ah in act_history]
+		if len(act_history) < 3:
+			return False
+		tail = []
+		i = len(act_history) - 1
+		contains = False
+		while True:
+			slice_size = len(act_history) - i
+			if len(act_history) < slice_size * 3:
+				break
+			first_slice = act_history[i:]
+			second_slice = act_history[i-slice_size:i]
+			third_slice = act_history[i-(slice_size*2):i-slice_size]
+			if first_slice == second_slice == third_slice:
+				contains = True
+				break
+			i -= 1
+		#print("CONTAINS TRIPLE LOOP?")
+		#print(contains)
+		return contains
+
 	def get_current_neighbors(self, current, act_seq, hint_list, detached_entities, operators):
-		# paths with three loops should be vetted
-		
+		# paths with more than two (three) loops should be vetted
+		if self.contains_triple_loop(current):
+			return []
+
 		#print("\nGETTING NEIGHBORS to {} (len {})".format(str([str(curr) for curr in current[0]]), len(current[0])))
 		neighbors = []
 		#print(len(current[0]))
@@ -279,7 +304,7 @@ class Planner:
 
 					# 3, part 2
 					for detached_entity in detached_entities:
-						print(detached_entities)
+						#print(detached_entities)
 						if detached_entity.name == moveTo_destination:
 							in_speech_entities = True
 
@@ -545,12 +570,12 @@ class Planner:
 			#if len(solutions) > 0:
 			#	time.sleep(1)
 			current = open_set[0]
-			print()
-			print("~~~~~~~~~~~~~~~")
-			print("~~~~~~~~~~~~~~~")
+			##print()
+			##print("~~~~~~~~~~~~~~~")
+			##print("~~~~~~~~~~~~~~~")
 			#print("neighbors to:")
-			for act in current[0]:
-				print(act)
+			##for act in current[0]:
+				##print(act)
 			goal_sat, trace_idxs = self.goal_satisfied(current, act_seq, hint_list, detached_entities)
 			if goal_sat:
 				print("obtained solution {}".format(len(solutions)))
@@ -563,15 +588,15 @@ class Planner:
 			if len(current[0]) > max(10, len(act_seq) * 3):
 				neighbors = []
 			else:
-				print("~~~~~~~~~~~~~~~")
-				print(current[1])
-				print(current[2])
-				print("~~~~~~~~~~~~~~~")
+				##print("~~~~~~~~~~~~~~~")
+				##print(current[1])
+				##print(current[2])
+				##print("~~~~~~~~~~~~~~~")
 				neighbors = self.get_current_neighbors(current, act_seq, hint_list, detached_entities, operators)
-				print()
+				##print()
 				#exit()
 			#time.sleep(1)
-			print("neighbors:")
+			##print("neighbors:")
 			for neighbor_data in neighbors:
 				# vet the neighbor.
 				# if there is already a solution that includes neighbor
@@ -586,7 +611,7 @@ class Planner:
 					came_from[neighbor] = current
 					g_score[neighbor] = tentative_g_score
 					f_score[neighbor] = tentative_g_score + self.heuristic(neighbor, act_seq, hint_list, detached_entities)
-					print(  "{} - {} - {}".format(neighbor[0][-1], g_score[neighbor], f_score[neighbor]))
+					##print(  "{} - {} - {}".format(neighbor[0][-1], g_score[neighbor], f_score[neighbor]))
 					if neighbor not in open_set:
 						open_set.append(neighbor)
 						open_set.sort(key=lambda x: f_score[x])
@@ -632,12 +657,12 @@ class Planner:
 		return solutions
 
 	def solve(self, trace, hints):
-		for item in trace:
-			print(item["waypoint"])
+		##for item in trace:
+			##print(item["waypoint"])
 		hint_seq = []
-		print(hints)
+		##print(hints)
 		for hint_dict in hints:
-			print(hint_dict)
+			##print(hint_dict)
 			hint_seq.extend(hint_dict["commands"])
 			hint_seq.extend(hint_dict["half-commands"])
 

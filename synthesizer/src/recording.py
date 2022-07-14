@@ -1,6 +1,7 @@
 import os
 import json
 import copy
+import time
 from nl_data import NLData
 from world import World
 from entities import *
@@ -17,10 +18,17 @@ class Recording:
 		self.plan = None             # also type Sketch
 
 	def parse_raw_input(self):
+		t1 = time.time()
 		self.nl_data.parse_content()
+		t2 = time.time()
 		plan = self.planner.plan(self)
+		t3 = time.time()
 		self.plan = Sketch()
 		self.plan.create_sketch_from_plan(plan)
+		t4 = time.time()
+		print(t2 - t1)
+		print(t3 - t2)
+		print(t4 - t3)
 
 	def create_partial_program_from_user_sequence(self):
 		self.partial_program = Sketch()
