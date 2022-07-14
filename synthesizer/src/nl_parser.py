@@ -24,6 +24,7 @@ class NLParser:
 		self.action_data = ActionData.get_instance()
 		self.entity_data = EntityData.get_instance()
 		self.lemmatizer = nltk.stem.wordnet.WordNetLemmatizer()
+		#self.lemmatizer.lemmatize("tests")  # the initial call to the lemmatizer is always the longest
 		self.ww = WordnetWrapper()
 		self.vnet3 = nltk.corpus.util.LazyCorpusLoader('verbnet3', nltk.corpus.reader.verbnet.VerbnetCorpusReader,r'(?!\.).*\.xml')
 
@@ -73,16 +74,22 @@ class NLParser:
 		sent_split = sentence.split()
 		sentence = " ".join(sent_split)
 		entities = self.entity_data.get_entities(sentence)
+		print("obtained_entities")
 		doc = nlp(sentence)
+		print("obtained doc")
 		tags = [(str(token), token.tag_) for token in doc]
+		print("obtained tags")
 		nouns = [(i, tags[i][0], tags[i][1]) for i in range(len(tags)) \
 				if self.is_noun(tags[i][1]) \
 				and not any(ent[1].name == self.entity_data.stemmer.stem(tags[i][0]) for ent in entities)]
+		print("obtained nouns")
 		pronouns = [(i, tags[i][0], tags[i][1]) for i in range(len(tags)) if self.is_pronoun(tags[i][1])]
+		print("obtained pronouns")
 		verbs = [(i, self.lemmatizer.lemmatize(tags[i][0], "v"), tags[i][1]) for i in range(len(tags)) if self.is_verb(tags[i][1])]
+		print("obtained everything else")
 		return entities, nouns, pronouns, verbs
 
-	def get_task_hints(self, verbs, entities, nouns, pronouns):
+	def get_task_hints(self, verbs, entities, nouns, pronouns, classification):
 		'''
 		Collect (1) commands, (2) half-commands [commands with missing entities], and (3) constraints [entities without a command]
 		Collect unparameterized commands (ucoms) by looking at each verb
@@ -137,6 +144,10 @@ class NLParser:
 			print("\n\nVERB DATA: {}".format(verb_data))
 			candidate_action_names = []
 			for cmd_name, cmd_data in self.action_data.action_primitives.items():
+				if classification == "conditional" and ("conditional" not in cmd_data["action_types"] and "trigger" not in cmd_data["action_types"]):
+					continue
+				if classification == "command" and "command" not in cmd_data["action_types"]:
+					continue
 				verb_classes = self.vnet3.classids(verb_data[1])
 				if any([cmd_verb in vc for vc in verb_classes for cmd_verb in cmd_data["verbnet"]]):
 					candidate_action_names.append(cmd_name)
@@ -261,7 +272,7 @@ class NLParser:
 			print(speech)
 			entities, nouns, pronouns, verbs = self.tag_sentences(sentence)
 			print(entities)
-			task_hint = self.get_task_hints(verbs, entities, nouns, pronouns)
+			task_hint = self.get_task_hints(verbs, entities, nouns, pronouns, interval_data.classification)
 			# discard empty hints
 			if len(task_hint["commands"]) == 0 and len(task_hint["half-commands"]) == 0 and len(task_hint["constraints"]) == 0:
 				continue
