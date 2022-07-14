@@ -10,6 +10,7 @@ from recording import ParamFilled, ParamHole, Action
 from recording import ActionData
 from entities import *
 from wordnet_wrapper import *
+from nl_data import Interval
 from nltk.parse.corenlp import CoreNLPParser
 
 nlp = spacy.load("en_core_web_sm")
@@ -203,26 +204,11 @@ class NLParser:
 			sentence.append(self.entity_data.get_entity("content", "$speech").name)
 		return " ".join(sentence), " ".join(original_sentence[i + 1:])
 
-	def get_text_from_interval(self, interval, text):
-		i = 0
-		substring = ""
-		active = False
-		for char in text:
-			if i == interval[0]:
-				active = True
-			elif i == interval[1]:
-				active = False
-			if active:
-				substring += char
-			if char != " ":
-				i += 1
-		return substring
-
-	def parse(self, raw_text):
+	def parse_from_raw_text(self, raw_text):
 		# STEP 0: return empty if there is no text
 		if raw_text == "":
 			return []
-		task_hints = []
+		#task_hints = []
 
 		# STEP 0: split into individual sentences. Go thru each individual sentence.
 		sentence_text = nltk.sent_tokenize(raw_text)
@@ -250,21 +236,24 @@ class NLParser:
 				if not in_sbar and idx in sbar_positions:
 					in_sbar = True
 					in_progress_char_interval = [curr_char_pos]
-					char_intervals.append({"interval": (prev_interval_end, curr_char_pos), "classification": "command", "text": self.get_text_from_interval((prev_interval_end, curr_char_pos), raw_text)})
+					#char_intervals.append({"interval": (prev_interval_end, curr_char_pos), "classification": "command", "text": self.get_text_from_interval((prev_interval_end, curr_char_pos), raw_text)})
+					char_intervals.append(Interval(prev_interval_end, curr_char_pos, "command"))
 				elif in_sbar and idx not in sbar_positions:
 					in_sbar = False
 					prev_interval_end = curr_char_pos
 					in_progress_char_interval.append(prev_interval_end)
-					char_intervals.append({"interval": tuple(in_progress_char_interval), "classification": "conditional", "text": self.get_text_from_interval((in_progress_char_interval[0], in_progress_char_interval[1]), raw_text)})
+					#char_intervals.append({"interval": tuple(in_progress_char_interval), "classification": "conditional", "text": self.get_text_from_interval((in_progress_char_interval[0], in_progress_char_interval[1]), raw_text)})
+					char_intervals.append(Interval(in_progress_char_interval[0], in_progress_char_interval[1], "conditional"))
 				leaf_cc = len(leaf)
 				curr_char_pos += leaf_cc
-			char_intervals.append({"interval": (prev_interval_end, curr_char_pos), "classification": "conditional" if in_sbar else "command", "text": self.get_text_from_interval((prev_interval_end, curr_char_pos), raw_text)})
+			#char_intervals.append({"interval": (prev_interval_end, curr_char_pos), "classification": "conditional" if in_sbar else "command", "text": self.get_text_from_interval((prev_interval_end, curr_char_pos), raw_text)})
+			char_intervals.append(Interval(prev_interval_end, curr_char_pos, "conditional" if in_sbar else "command"))
 
 		# STEP 1.5: broadcast recording update containing command/conditional intervals
 		# work around both sentences and intervals
 
 		for interval_data in char_intervals:
-			sentence = self.preprocess_text(interval_data["text"])
+			sentence = self.preprocess_text(interval_data.get_text_from_interval(raw_text))
 			if len(sentence) == 0:
 				continue
 			sentence, speech = self.convert_speech_simple(sentence)
@@ -282,26 +271,30 @@ class NLParser:
 						speech_ent = SpeechEntity("$speech", ["content"], speech)
 						self.entity_data.add_new_entity(speech_ent)
 						command.args["speech"] = ParamFilled(speech_ent)
-			task_hints.append(task_hint)
-		for task_hint in task_hints:
-			print()
-			print("commands")
-			for cmd in task_hint["commands"]:
-				for c in cmd:
-					print(c)
+			interval_data.set_task_hint(task_hint)
+			print("\n\n\nTASK HINT!!")
+			print(str(interval_data))
+			#task_hints.append(task_hint)
+		#for task_hint in task_hints:
+		#	print()
+		#	print("commands")
+		#	for cmd in task_hint["commands"]:
+		#		for c in cmd:
+		#			print(c)
 
-			print("half commands")
-			for half_cmd in task_hint["half-commands"]:
-				for hc in half_cmd:
-					print(hc)
+		#	print("half commands")
+		#	for half_cmd in task_hint["half-commands"]:
+		#		for hc in half_cmd:
+		#			print(hc)
 
-			print("constraints")
-			for const in task_hint["constraints"]:
-				for c in const:
-					print(c)
-		print(task_hints)
+		#	print("constraints")
+		#	for const in task_hint["constraints"]:
+		#		for c in const:
+		#			print(c)
+		#print(task_hints)
 		#exit()
-		return task_hints
+		# return task_hints
+		return char_intervals
 
 	def traverse_tree(self, tree, sbar_positions, sbar_leaves, curr_position, in_sbar=False):
 		for subtree in tree:
