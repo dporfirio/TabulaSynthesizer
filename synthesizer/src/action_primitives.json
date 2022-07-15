@@ -32,8 +32,8 @@
 		"argtypes": ["grabbable", "container"],
 		"preconditions": {"carryingItem": 0},
 		"postconditions": {"carryingItem": ""},
-		"verbnet": ["put-9.1","put_spatial-9.2","put_direction-9.4"],
-		"synsets": ["put.v.01","lodge.v.02"]
+		"verbnet": ["put-9.1","put_spatial-9.2","put_direction-9.4", "send-11.1","slide-11.2","bring-11.3","carry-11.4","drive-11.5"],
+		"synsets": ["put.v.01","lodge.v.02", "deliver.v.02"]
 	},
 	"say": {
 		"action_types": ["command", "trigger"],

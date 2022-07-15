@@ -69,7 +69,6 @@ class Interval:
 		for hint_tup in self.task_hint["half-commands"]:
 			for hint in hint_tup:
 				s += "      CMD: {}\n".format(hint)
-		for hint_tup in self.task_hint["constraints"]:
-			for hint in hint_tup:
-				s += "      CMD: {}\n".format(hint)
+		for hint in self.task_hint["constraints"]:
+			s += "      constraint: {}\n".format(hint)
 		return s

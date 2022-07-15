@@ -128,7 +128,7 @@ class Planner:
 					curr_move_to = act
 					break
 		if curr_move_to is None:
-			###print("ERROR: must have a moveTo action in sequence of actions")
+			print("ERROR: must have a moveTo action in sequence of actions")
 			exit()
 
 		# see if there is a previous "moveTo", determine expected action
@@ -457,11 +457,12 @@ class Planner:
 					detached_tracker_copy[entity] = True
 					new_sat_counter = copy.copy(sat_counter)
 					new_sat_counter[1] += 1
-					if len(act_history) >= 2 and act_history[1].name == "moveTo":# and act_history[1].args["destination"].label.name == "groceries":
-						print(entity)
-						print(args)
-						print(new_sat_counter)
-						exit()
+					#if len(act_history) >= 2 and act_history[1].name == "moveTo":# and act_history[1].args["destination"].label.name == "groceries":
+					#	print(entity)
+					#	print(args)
+					#	print(new_sat_counter)
+					#	print("Trace satisfied helper exit")
+					#	exit()
 					sat = self.trace_satisfied_hints_helper(curr_act_idx + 1, curr_hint_idx, act_history, hint_list, detached_tracker_copy, new_sat_counter, scores)
 					result = result or sat
 		sat = self.trace_satisfied_hints_helper(curr_act_idx + 1, curr_hint_idx, act_history, hint_list, detached_tracker, sat_counter, scores)
@@ -559,6 +560,8 @@ class Planner:
 		return result
 
 	def astar(self, start, act_seq, hint_list, detached_entities, solutions, operators):
+		print("astar")
+		print(operators)
 		open_set = [start]
 		came_from = {}
 		g_score = {}  # if an element is not here, the val is inf

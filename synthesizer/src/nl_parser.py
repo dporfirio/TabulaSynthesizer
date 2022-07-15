@@ -305,6 +305,7 @@ class NLParser:
 		#print(task_hints)
 		#exit()
 		# return task_hints
+		print("HELLO HELLO HELLO")
 		return char_intervals
 
 	def traverse_tree(self, tree, sbar_positions, sbar_leaves, curr_position, in_sbar=False):
