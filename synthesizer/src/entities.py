@@ -64,7 +64,6 @@ class EntityData:
 					established_entities[obj] = Entity(obj, self.obj2category[obj], self.stemmer)
 				self.obj2category[obj].append(category)
 				self.entities[category].append(established_entities[obj])
-		print(self.entities)
 
 		# must add an extra
 		#if "robot" in self.entities:
@@ -100,6 +99,10 @@ class EntityData:
 				continue
 			self.entities[cat].append(entity)
 		self.obj2category[entity] = categories
+		print(self.entities)
+		print(entity)
+		print(type(entity))
+		#exit()
 
 	def get_entities(self, text):
 		nonstandard_arr = text.split()

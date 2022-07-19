@@ -74,10 +74,10 @@
 	},
 	"when_receive": {
 		"action_types": ["trigger"],
-		"argnames": [],
-		"argtypes": [],
+		"argnames": ["item"],
+		"argtypes": ["grabbable"],
 		"preconditions": {},
-		"postconditions": {"carryingItem": ""},
+		"postconditions": {"carryingItem": 0},
 		"verbnet": ["obtain-13.5.2","get-13.5.1"],
 		"synsets": ["receive.v.01"]
 	},

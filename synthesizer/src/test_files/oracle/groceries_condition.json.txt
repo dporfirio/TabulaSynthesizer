@@ -2,9 +2,13 @@ PROGRAM
 init: groceries
 
 waypoint: groceries
-  >> acts ACTION: say : ['Param:\nspeech: hello'] : ACTION: grab : ['Param:\ngroceries']
-  goto >> cabinets
+  >> acts ACTION: grab : ['Param:\ngroceries']
+  goto >> kitchen
 
-waypoint: cabinets
-  >> acts ACTION: put : ['Param:\ngroceries', 'Param:\ncabinets'] : ACTION: say : ['Param:\nspeech: exit']
+waypoint: kitchen
+  >> acts ACTION: say : ['Param:\nspeech: hello']
+  goto >> countertop
+
+waypoint: countertop
+  >> acts ACTION: put : ['Param:\ngroceries', 'Param:\ncountertop'] : ACTION (trigger): say : ['Param:\nspeech: exit']
   goto >> groceries

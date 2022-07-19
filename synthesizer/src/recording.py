@@ -161,7 +161,7 @@ class Waypoint:
 
 class Action:
 
-	def __init__(self, name, args):
+	def __init__(self, name, args, _type="command"):
 		action_data = ActionData.get_instance().action_primitives[name]
 		self.name = name
 		self.args = args
@@ -170,6 +170,12 @@ class Action:
 		self.postcondition = self.create_action_conditions(action_data["postconditions"])
 		self.verbsets = action_data["verbnet"]
 		self.synsets = action_data["synsets"]
+
+		# determine if this action is a command, trigger, or conditional
+		if len(action_data["action_types"]) == 1:
+			self._type = action_data["action_types"][0]
+		else:
+			self._type = _type
 
 	def create_action_conditions(self, raw_conditions):
 		conditions = copy.copy(raw_conditions)
@@ -191,6 +197,8 @@ class Action:
 		world_st = World.get_instance()
 		if self.name != other.name:
 			return False
+		if self._type != other._type:
+			return False
 		for arg, argval in self.args.items():
 			other_argval = other.args[arg]
 			if argval.hole:
@@ -204,11 +212,13 @@ class Action:
 		return True
 
 	def __str__(self):
-		s = "ACTION: {} : {}".format(self.name, [str(argval) for argname, argval in self.args.items()])
+		s = "ACTION{}: {} : {}".format(" ({})".format(self._type) if self._type != "command" else "", self.name, [str(argval) for argname, argval in self.args.items()])
 		return s
 
 	def equals(self, other):
 		if self.name != other.name:
+			return False
+		if self._type != other._type:
 			return False
 		same_args = True
 		for argname, argval in self.args.items():

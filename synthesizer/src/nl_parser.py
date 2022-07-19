@@ -148,6 +148,8 @@ class NLParser:
 					continue
 				if classification == "command" and "command" not in cmd_data["action_types"]:
 					continue
+				if classification == "conditional" and "trigger" in cmd_data["action_types"]:
+					classification = "trigger"
 				verb_classes = self.vnet3.classids(verb_data[1])
 				if any([cmd_verb in vc for vc in verb_classes for cmd_verb in cmd_data["verbnet"]]):
 					candidate_action_names.append(cmd_name)
@@ -186,7 +188,7 @@ class NLParser:
 				args = {}
 				for i, argname in enumerate(self.action_data.action_primitives[best_action_name]["argnames"]):
 					args[argname] = ParamFilled(best_entities[j][i][1]) if best_entities[j][i] != "HOLE" else ParamHole()
-				command = Action(best_action_name, args)
+				command = Action(best_action_name, args, classification)
 				commands.append(command)
 			command_tup = tuple(commands)
 			command_list = task_hints["commands"]
@@ -303,7 +305,6 @@ class NLParser:
 		#		for c in const:
 		#			print(c)
 		#print(task_hints)
-		#exit()
 		# return task_hints
 		print("HELLO HELLO HELLO")
 		return char_intervals
