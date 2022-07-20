@@ -1,4 +1,4 @@
-PROGRAM
+PROGRAM (main)
 init: living room
 
 waypoint: living room

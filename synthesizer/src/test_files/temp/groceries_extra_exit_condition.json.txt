@@ -7,3 +7,14 @@ waypoint: groceries
 
 waypoint: cabinets
   >> acts ACTION: put : ['Param:\ngroceries', 'Param:\ncabinets']
+  goto >> groceries
+PROGRAM (branch)
+init: groceries
+branch condition: ACTION (trigger): say : ['Param:\nspeech: exit']
+
+waypoint: groceries
+  >> acts 
+  goto >> home base
+
+waypoint: home base
+  >> acts 

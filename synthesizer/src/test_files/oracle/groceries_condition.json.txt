@@ -1,4 +1,4 @@
-PROGRAM
+PROGRAM (main)
 init: groceries
 
 waypoint: groceries
@@ -10,5 +10,7 @@ waypoint: kitchen
   goto >> countertop
 
 waypoint: countertop
-  >> acts ACTION: put : ['Param:\ngroceries', 'Param:\ncountertop'] : ACTION (trigger): say : ['Param:\nspeech: exit']
+  >> acts ACTION: put : ['Param:\ngroceries', 'Param:\ncountertop'] : 
+          CONTINUE IF: ACTION (trigger): say : ['Param:\nspeech: exit'];
+          ELSE see jumps: 
   goto >> groceries

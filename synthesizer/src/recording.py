@@ -53,11 +53,19 @@ class Sketch:
 		self.waypoints = {}
 		self.init_waypoint = None
 
+		# only for non-main sketches
+		self.branch_condition = None
+
 	def create_sketch_from_plan(self, plan):
 		'''
 		Purpose of this method is to add a recording to the program.
 		In doing so, the program itself is updated.
 		'''
+		def action_or_conditional(action):
+			if action._type == "conditional" or action._type == "trigger":
+				return "conditional"
+			return "command"
+
 		wp = None
 		prev_wp_label = None
 		curr_acts = []
@@ -74,10 +82,15 @@ class Sketch:
 			elif wp is None:
 				continue
 			elif i == len(plan) - 1:
-				curr_acts.append(act)
+				curr_acts.append(ActionContainer(action_or_conditional(act), act))
 				wp.postmove_actions = copy.copy(curr_acts)
 			else:
-				curr_acts.append(act)
+				curr_acts.append(ActionContainer(action_or_conditional(act), act))
+
+		# if necessary, move the conditional in the init waypoint to the branch condition
+		if len(self.init_waypoint.postmove_actions) > 0 and self.init_waypoint.postmove_actions[0]._type != "command":
+			self.branch_condition = self.init_waypoint.postmove_actions[0].action
+			del self.init_waypoint.postmove_actions[0]
 
 	def add_waypoint_from_trace(self, wp_label, prev_wp_label):
 		if wp_label not in self.waypoints:
@@ -95,13 +108,6 @@ class Sketch:
 		for wp_label in user_sequence:
 			self.add_waypoint_from_trace(wp_label, prev_wp_label)
 			prev_wp_label = wp_label
-
-	def __str__(self):
-		s = "PROGRAM\ninit: {}\n".format(sketch.init_waypoint.label)
-		for label, wp in sketch.waypoints.items():
-			s += "\n"
-			s += str(wp)
-		return s
 
 
 class ActionData:
@@ -157,6 +163,33 @@ class Waypoint:
 		for ie in self.if_execs:
 			s += "  goto >> {}".format(str(ie))
 		return s
+
+
+class ActionContainer:
+
+	def __init__(self, _type, action_or_conditional):
+		self._type = _type  # command or conditional
+
+		# if is a single action = None
+		self.action = action_or_conditional   # type = action
+
+		# if is a conditional
+		self.jump = []   # type = list of recording id's
+
+	def add_jump(self, recording):
+		if self._type == "action":
+			print("ERROR: cannot add a jump to a non-conditional")
+			exit()
+		self.jump = recording
+
+	def __str__(self):
+		if self._type == "conditional":
+			s = "\n          CONTINUE IF: {};\n          ELSE see jumps: ".format(str(self.action))
+			for jmp in self.jump:
+				s += "\n            {}".format(str(jmp))
+			return s
+		else:
+			return str(self.action)
 
 
 class Action:

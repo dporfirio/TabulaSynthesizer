@@ -28,7 +28,10 @@ class Program:
 		'''
 		self.recordings.append(recording)
 		if self.main_recording is None:
+			print("Added first recording.")
 			self.main_recording = recording
+		else:
+			print("Added second recording.")
 		print(self)
 
 	def write_result(self, path):
@@ -40,7 +43,9 @@ class Program:
 		s = ""
 		for recording in self.recordings:
 			sketch = recording.plan
-			s += "PROGRAM\ninit: {}\n".format(sketch.init_waypoint.label)
+			s += "PROGRAM {}\ninit: {}\n".format("(main)" if recording == self.main_recording else "(branch)", sketch.init_waypoint.label)
+			if sketch.branch_condition is not None:
+				s += "branch condition: {}\n".format(sketch.branch_condition)
 			for label, wp in sketch.waypoints.items():
 				s += "\n"
 				s += str(wp)
