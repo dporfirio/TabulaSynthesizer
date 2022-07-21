@@ -58,6 +58,6 @@
 		   "Stop when I say exit."],
 	"trajectories": [
 						["garage", "kitchen", "garage"],
-						["garage", "home base"]
+						["groceries", "home base"]
 					]
 }

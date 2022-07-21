@@ -542,13 +542,12 @@ class Planner:
 		# how far are we from including the act_seq, hint_list, and incomplete_hint_seq in curr?
 		act_history = curr[0]
 		act_seq_idx = 0
-		seen_wp_locations = []  # overestimate reductions in cost due to similar waypoint locations
 		for i, act in enumerate(act_history):
-			if act.name == "moveTo":
-				seen_wp_locations.append(act)
 			if act_seq_idx < len(act_seq) and act_seq[act_seq_idx].is_superset(act):
+				print("{} is superset of {}".format(act_seq[act_seq_idx], act))
 				act_seq_idx += 1
 		# calculate penalty deductions
+		# maybe only give a penalty deduction if this one is supposed to be repeated...
 		penalty_deduction = 0
 		for i in range(act_seq_idx, len(act_seq)):
 			act = act_seq[i]
@@ -570,6 +569,13 @@ class Planner:
 		#		hint_precond = 1
 		#		break
 		_, hint_score = self.trace_satisfies_hints(act_history, hint_list, detached_entities)
+		print("  ~ {}".format(len(act_seq)))
+		print("  ~ {}".format(act_seq_idx))
+		print("  ~ {}".format(penalty_deduction))
+		print("  ~ {}".format(len(hint_list)))
+		print("  ~ {}".format(len(detached_entities)))
+		print("  ~ {}".format(hint_score))
+		print("  ~ {}".format(hint_precond))
 		val = ((len(act_seq) - act_seq_idx) - penalty_deduction) + ((len(hint_list) + len(detached_entities)) - hint_score) + hint_precond
 		return val
 
@@ -634,6 +640,7 @@ class Planner:
 			#	if (i == 3 and act.name != "moveTo") or (i == 3 and act.name == "moveTo" and act.args["destination"].label.name != "groceries"):
 			#		sat_spec = False
 			#		break
+			
 			if True:# sat_spec and (i == 3 or i == 4):
 				print()
 				print("~~~~~~~~~~~~~~~")
@@ -641,12 +648,13 @@ class Planner:
 				print("neighbors to:")
 				for act in current[0]:
 					print(act)
+			
 			goal_sat, trace_idxs = self.goal_satisfied(current, act_seq, hint_list, detached_entities)
 			if goal_sat:
 				print("obtained solution {}".format(len(solutions)))
 				print(g_score[current])
 				solutions.append((self.reconstruct_path(came_from, current), trace_idxs))
-				if len(solutions) > 2:
+				if len(solutions) > 0:
 					return #self.reconstruct_path(came_from, current), trace_idxs
 			open_set.remove(current)
 			# adhere to the length cap
@@ -662,8 +670,10 @@ class Planner:
 				##print()
 				#exit()
 			#time.sleep(1)
+			
 			if True: #sat_spec and i == 3:
 				print("neighbors:")
+			
 			for neighbor_data in neighbors:
 				# vet the neighbor.
 				# if there is already a solution that includes neighbor
@@ -678,8 +688,10 @@ class Planner:
 					came_from[neighbor] = current
 					g_score[neighbor] = tentative_g_score
 					f_score[neighbor] = tentative_g_score + self.heuristic(neighbor, act_seq, hint_list, detached_entities)
+					
 					if True:# sat_spec and i == 3:
 						print(  "{} - {} - {}".format(neighbor[0][-1], g_score[neighbor], f_score[neighbor]))
+					
 					if neighbor not in open_set:
 						open_set.append(neighbor)
 						open_set.sort(key=lambda x: f_score[x])
@@ -765,6 +777,40 @@ class Planner:
 		for hint_dict in hints:
 			if len(hint_dict["constraints"]) > 0:
 				detached_entities.append(hint_dict["constraints"][0][1])
+
+		'''
+		# remove items from detached entities that are satisfied by the
+		#   hint list or the action sequence from being counted in the heuristic
+
+		# remove items from the hint list that are satisfied by the action
+		#   sequence from being counted in the heuristic
+		hint_tup_idx_to_remove = []
+		for idx, hint_tup in enumerate(hint_seq):
+			is_redundant = False
+			if len(trace) == 0:
+				continue
+			for hint in hint_tup:
+				if hint.name == "moveTo":
+					if hint.args["destination"].hole:
+						is_redundant = True
+					for data in trace:
+						for act in data["actions"]:
+							if act.args["destination"].hint.args["destination"]:
+								is_redundant = True
+								break
+					if is_redundant:
+						break
+
+			if is_redundant:
+				hint_tup_idx_to_remove.append(idx)
+		hint_tup_idx_to_remove.reverse()
+		for idx in hint_tup_idx_to_remove:
+			del hint_seq[idx]
+		for hint in hint_seq:
+			print(hint)
+		exit()
+		'''
+
 		solutions = self.solve_helper(trace, hint_seq, detached_entities)
 		###print(sketch)
 		###for i, solution in enumerate(solutions):

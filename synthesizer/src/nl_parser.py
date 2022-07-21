@@ -201,7 +201,7 @@ class NLParser:
 		# 	print(hint[0])
 		#for hint in task_hints["half-commands"][0]:
 		# 	print(hint)
-		# exit()
+		#exit()
 		return task_hints
 
 	def convert_speech_simple(self, sentence):
@@ -242,7 +242,7 @@ class NLParser:
 
 			# convert sbar positions to character invervals
 			# character intervals DO NOT include spaces (i.e., s in "ab s" is position 2)
-			in_sbar = False
+			in_sbar = False if 0 not in sbar_positions else True
 			prev_interval_end = curr_char_pos
 			in_progress_char_interval = None
 			for idx, leaf in enumerate(sbar_leaves):
@@ -265,6 +265,7 @@ class NLParser:
 		# STEP 1.5: broadcast recording update containing command/conditional intervals
 		# work around both sentences and intervals
 
+		intervals_to_print = []
 		for interval_data in char_intervals:
 			sentence = self.preprocess_text(interval_data.get_text_from_interval(raw_text))
 			if len(sentence) == 0:
@@ -286,6 +287,8 @@ class NLParser:
 						command.args["speech"] = ParamFilled(speech_ent)
 			interval_data.set_task_hint(task_hint)
 			print("\n\n\nTASK HINT!!")
+			intervals_to_print.append(interval_data)
+		for interval_data in intervals_to_print:
 			print(str(interval_data))
 			#task_hints.append(task_hint)
 		#for task_hint in task_hints:
