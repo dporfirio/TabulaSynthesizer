@@ -513,7 +513,7 @@ class Planner:
 			return True, act_seq_idxs
 		return False, act_seq_idxs
 
-	def cost(self, curr):
+	def cost(self, curr, init_cost=1):
 		'''
 		Find the cost for adding a new action.
 		Most of the time, this cost will be 1. 
@@ -521,21 +521,23 @@ class Planner:
 			action sequences.
 		For wp penalties, DO NOT double penalize waypoints.
 		'''
-		cost = 1
+		cost = init_cost
 		act_history = curr[0]
 		if len(act_history) < 2:
 			return cost
 		mr_action = act_history[-1]
 		sr_action = act_history[-2]
 		if mr_action.name == "moveTo" and sr_action.name == "moveTo":  # possible penalty
-			is_double_penalty = False
-			for i, act in enumerate(act_history[:-1]):
-				if act.equals(mr_action):
-					is_double_penalty = True
+			is_double = False
+			for i, act in enumerate(act_history[:-2]):
+				if act.equals(sr_action):
+					is_double = True
 					break
-			if not is_double_penalty:
+			if not is_double:
 				#cost += 0.1
 				cost += 1
+			else:
+				print("DOBLE -- no penalty")
 		return cost
 
 	def heuristic(self, curr, act_seq, hint_list, detached_entities):
@@ -547,7 +549,6 @@ class Planner:
 				print("{} is superset of {}".format(act_seq[act_seq_idx], act))
 				act_seq_idx += 1
 		# calculate penalty deductions
-		# maybe only give a penalty deduction if this one is supposed to be repeated...
 		penalty_deduction = 0
 		for i in range(act_seq_idx, len(act_seq)):
 			act = act_seq[i]
@@ -610,6 +611,14 @@ class Planner:
 		#	print("LSKADJFS")
 		#	exit()
 		return result
+
+	def get_neighbor_cost(self, current, neighbor, obj_penalty):
+		if self.is_repeat_action(list(current[0]), neighbor):
+			print("repeated action cost")
+			return self.cost(neighbor, 0)
+		else:
+			print("NON-repeated action cost")
+			return self.cost(neighbor) + obj_penalty
 
 	def astar(self, start, act_seq, hint_list, detached_entities, solutions, operators):
 		print("astar")
@@ -683,7 +692,7 @@ class Planner:
 					continue
 				obj_penalty = neighbor_data[1]
 			#	print(neighbor[0][-1])
-				tentative_g_score = g_score[current] + (0 if self.is_repeat_action(list(current[0]), neighbor) else (self.cost(neighbor) + obj_penalty))
+				tentative_g_score = g_score[current] + self.get_neighbor_cost(current, neighbor, obj_penalty)
 				if tentative_score < g_score[neighbor] if neighbor in g_score else 100000:
 					came_from[neighbor] = current
 					g_score[neighbor] = tentative_g_score
