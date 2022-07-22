@@ -536,23 +536,24 @@ class Planner:
 			if not is_double:
 				#cost += 0.1
 				cost += 1
-			else:
-				print("DOBLE -- no penalty")
+			#else:
+				#print("DOBLE -- no penalty")
 		return cost
 
 	def heuristic(self, curr, act_seq, hint_list, detached_entities):
 		# how far are we from including the act_seq, hint_list, and incomplete_hint_seq in curr?
 		act_history = curr[0]
 		act_seq_idx = 0
+		act_seq_matches = []
 		for i, act in enumerate(act_history):
 			if act_seq_idx < len(act_seq) and act_seq[act_seq_idx].is_superset(act):
-				print("{} is superset of {}".format(act_seq[act_seq_idx], act))
+				act_seq_matches.append(act)
 				act_seq_idx += 1
 		# calculate penalty deductions
 		penalty_deduction = 0
 		for i in range(act_seq_idx, len(act_seq)):
 			act = act_seq[i]
-			if any([act.is_superset(historical_act) for historical_act in act_history]):
+			if any([act.is_superset(historical_act) for historical_act in act_seq_matches]):
 				penalty_deduction += 1
 		# is there a remaining hint with a precondition that cannot be satisfied
 		#	with the current conditions AND cannot be satisfied by the postconditions
@@ -614,10 +615,10 @@ class Planner:
 
 	def get_neighbor_cost(self, current, neighbor, obj_penalty):
 		if self.is_repeat_action(list(current[0]), neighbor):
-			print("repeated action cost")
+			#print("repeated action cost")
 			return self.cost(neighbor, 0)
 		else:
-			print("NON-repeated action cost")
+			#print("NON-repeated action cost")
 			return self.cost(neighbor) + obj_penalty
 
 	def astar(self, start, act_seq, hint_list, detached_entities, solutions, operators):
