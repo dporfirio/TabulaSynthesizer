@@ -1,4 +1,4 @@
-PROGRAM (main)
+PROGRAM (0, main)
 init: groceries
 
 waypoint: groceries

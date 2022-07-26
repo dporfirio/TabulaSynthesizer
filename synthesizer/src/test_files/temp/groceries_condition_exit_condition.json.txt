@@ -13,4 +13,15 @@ waypoint: countertop
   >> acts ACTION: put : ['Param:\ngroceries', 'Param:\ncountertop'] : 
           CONTINUE IF: ACTION (trigger): say : ['Param:\nspeech: exit'];
           ELSE see jumps: 
+            1
   goto >> groceries
+PROGRAM (1, branch)
+init: countertop
+branch condition: ACTION (trigger): say : ['Param:\nspeech: goodbye']
+
+waypoint: countertop
+  >> acts 
+  goto >> home base
+
+waypoint: home base
+  >> acts 

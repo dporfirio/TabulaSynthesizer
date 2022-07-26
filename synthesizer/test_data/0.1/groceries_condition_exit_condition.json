@@ -1,0 +1,63 @@
+{
+	"world": {
+		"regions": {
+			"kitchen":
+			{
+				"name": "kitchen",
+				"objects": [
+					{
+						"name": "cabinets",
+						"objects": []
+					}
+				]
+			},
+			"garage":
+			{
+				"name": "garage",
+				"objects": [
+					{
+						"name": "car",
+						"objects": [
+										{
+											"name": "groceries",
+											"objects": []
+										}
+									]
+					}
+				]
+			},
+			"living room":
+			{
+				"name": "living room",
+				"objects": [
+					{
+						"name": "countertop",
+						"objects": []
+					}
+				]
+			},
+			"bedroom":
+			{
+				"name": "bedroom",
+				"objects": [
+					{
+						"name": "person",
+						"objects": []
+					}
+				]
+			},
+			"home base":
+			{
+				"name": "home base",
+				"objects": []	
+			}
+		}
+		
+	},
+	"nl": ["Say hello. Then when tomorrow doesn't come don't put the groceries away when I say exit.",
+		   "When I say goodbye. Go home."],
+	"trajectories": [
+						["garage", "kitchen", "garage"],
+						["countertop", "home base"]
+					]
+}

@@ -1,4 +1,4 @@
-PROGRAM (main)
+PROGRAM (0, main)
 init: groceries
 
 waypoint: groceries
@@ -8,7 +8,7 @@ waypoint: groceries
 waypoint: cabinets
   >> acts ACTION: put : ['Param:\ngroceries', 'Param:\ncabinets']
   goto >> groceries
-PROGRAM (branch)
+PROGRAM (1, branch)
 init: groceries
 branch condition: ACTION (trigger): say : ['Param:\nspeech: exit']
 

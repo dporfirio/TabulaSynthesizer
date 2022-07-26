@@ -17,6 +17,8 @@ class Recording:
 		self.partial_program = None  # type Sketch
 		self.plan = None             # also type Sketch
 
+		self._id = -1
+
 	def parse_raw_input(self):
 		t1 = time.time()
 		self.nl_data.parse_content()
@@ -186,7 +188,7 @@ class ActionContainer:
 		if self._type == "conditional":
 			s = "\n          CONTINUE IF: {};\n          ELSE see jumps: ".format(str(self.action))
 			for jmp in self.jump:
-				s += "\n            {}".format(str(jmp))
+				s += "\n            {}".format(str(jmp._id))
 			return s
 		else:
 			return str(self.action)

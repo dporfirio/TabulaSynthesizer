@@ -711,8 +711,8 @@ class Planner:
 
 	def get_allowable_operators(self, hint_list, detached_entities, act_seq):
 		operators = [Operator("moveTo", "command", [None])]
+
 		# add hints
-		print()
 		for hint_tup in hint_list:
 			for hint in hint_tup:
 				args = []
@@ -725,14 +725,13 @@ class Planner:
 					else:
 						args.append(arg.label.name)
 				operators.append(Operator(hint.name, hint._type, args))
-		print()
+
 		# add actions that meet the preconditions of hints
 		preconditions = []
 		for hint_tup in hint_list:
 			for act in hint_tup:
 				for precond_type, precond_val in act.precondition._or[0].items():
 					preconditions.append({"type": precond_type, "val": precond_val})
-		print(preconditions)
 		for entity in detached_entities:
 			for ap, ap_data in ActionData.get_instance().action_primitives.items():
 				if len(set(ap_data["argtypes"]).intersection(set(entity.categories))) > 0:
@@ -740,10 +739,10 @@ class Planner:
 						operators.append(Operator(ap, at, [None for arg in ap_data["argnames"]]))
 					continue	
 		for ap, ap_data in ActionData.get_instance().action_primitives.items():
-			#if any([precondition["type"] in ap_data["postconditions"] for precondition in preconditions]):
 			for precondition in preconditions:
 				if precondition["type"] in ap_data["postconditions"]:
-					if type(ap_data["postconditions"][precondition["type"]]) != int and precondition["val"] == ap_data["postconditions"][precondition["type"]]:
+					if type(ap_data["postconditions"][precondition["type"]]) != int and \
+						precondition["val"] == ap_data["postconditions"][precondition["type"]]:
 						for at in ap_data["action_types"]:
 							operators.append(Operator(ap, at, [None for arg in ap_data["argnames"]]))
 						break
@@ -762,188 +761,27 @@ class Planner:
 			wp = wp_dict["waypoint"]
 			act_seq.append(wp.move_action)
 			act_seq.extend(wp.postmove_actions)
-		# action history, postcondition args, postcondition vals
-		#print(" : ".join([str(act) for act in act_seq]))
-		#print(" : ".join([str(act) for act in hint_list]))
-		start = ((ad.get_idle(),), tuple(key for key in sorted(list(ad.init.keys()))), tuple([ad.init[key] for key in sorted(list(ad.init.keys()))]))
+		start = ((ad.get_idle(),), tuple(key for key in sorted(list(ad.init.keys()))),
+			tuple([ad.init[key] for key in sorted(list(ad.init.keys()))]))
 		solutions = []
 		operators = self.get_allowable_operators(hint_list, detached_entities, act_seq)
 		self.astar(start, act_seq, hint_list, detached_entities, solutions, operators)
 		return solutions
 
 	def solve(self, trace, hints):
-		##for item in trace:
-			##print(item["waypoint"])
 		hint_seq = []
-		##print(hints)
 		for hint_dict in hints:
-			##print(hint_dict)
 			hint_seq.extend(hint_dict["commands"])
 			hint_seq.extend(hint_dict["half-commands"])
 
-		# TODO: add incomplete hints! An unattached entity (incomplete hint)
-		# MUST be included in the solution. SEPARATELY.
+		# An unattached entity (incomplete hint) MUST
+		# be included in the solution SEPARATELY.
 		detached_entities = []
 		for hint_dict in hints:
 			if len(hint_dict["constraints"]) > 0:
 				detached_entities.append(hint_dict["constraints"][0][1])
-
-		'''
-		# remove items from detached entities that are satisfied by the
-		#   hint list or the action sequence from being counted in the heuristic
-
-		# remove items from the hint list that are satisfied by the action
-		#   sequence from being counted in the heuristic
-		hint_tup_idx_to_remove = []
-		for idx, hint_tup in enumerate(hint_seq):
-			is_redundant = False
-			if len(trace) == 0:
-				continue
-			for hint in hint_tup:
-				if hint.name == "moveTo":
-					if hint.args["destination"].hole:
-						is_redundant = True
-					for data in trace:
-						for act in data["actions"]:
-							if act.args["destination"].hint.args["destination"]:
-								is_redundant = True
-								break
-					if is_redundant:
-						break
-
-			if is_redundant:
-				hint_tup_idx_to_remove.append(idx)
-		hint_tup_idx_to_remove.reverse()
-		for idx in hint_tup_idx_to_remove:
-			del hint_seq[idx]
-		for hint in hint_seq:
-			print(hint)
-		exit()
-		'''
-
 		solutions = self.solve_helper(trace, hint_seq, detached_entities)
-		###print(sketch)
-		###for i, solution in enumerate(solutions):
-			###act_seq = solution[0]
-			###print("SOLUTION")
-			###print(" : ".join([str(act) for act in act_seq]))
-			###sketch.overwrite(act_seq)
-		###sketch.overwrite(solutions[0][0])
-		###return sketch
 		return solutions[0][0]
-
-	def solve_pop(self, trace, hints):
-		action_primitives = ActionData.get_instance().action_primitives
-		init_state = ActionData.get_instance().init
-		self.pop(init_state, action_primitives, trace, hints)
-
-	# # # # # # # # # #
-	# POP
-	# Heuristic -- best-first search
-	# # # # # # # # # #
-	def pop(self, init_state, action_primitives, trace, hints):
-		'''
-		Initial state must be a dictionary of propositions
-		Conjunctive goal must also be a dictionary of propositions
-			(each item in each dict represents a conjunction)
-
-		Dictionaries are created from (a) the action primitives and
-		(b) the trace and (c) the hints
-		'''
-		initial_state, conjunctive_goal, operators = self.create_pop_params(init_state, action_primitives, trace, hints)
-		plan = self.make_initial_plan(initial_state, conjunctive_goal)
-		while True:
-			if self.is_solution(plan):
-				break
-			S_need, c = self.select_subgoal(plan)
-			self.choose_operator(plan, operators, S_need, c)
-			self.resolve_threats(plan)
-		return plan
-
-	def create_pop_params(self, init_state, action_primitives, trace, hints):
-		'''
-		Create: initial_state, conjunctive_goal, and operators
-		'''
-		initial_state = init_state
-		operators = action_primitives
-		conjunctive_goal = {}
-
-		# add operators and pre/postconditions from trace
-		act_seq = []
-		for wp_dict in trace:
-			wp = wp_dict["waypoint"]
-			act_seq.append(wp.move_action)
-			act_seq.extend(wp.postmove_actions)
-		for i, act in enumerate(act_seq):
-			operators[str(i)] = action_primitives[act.name]
-			operators[str(i)]["preconditions"] = act.precondition._or[0]
-			operators[str(i)]["postconditions"] = act.postcondition._or[0]
-			initial_state["trace_{}".format(str(i))] = False
-			operators[str(i)]["postconditions"]["trace_{}".format(str(i))] = True
-			if i > 0:
-				operators[str(i)]["preconditions"]["trace_{}".format(str(i-1))] = True
-			if i == len(act_seq) - 1:
-				conjunctive_goal["trace_{}".format(str(i))] = True
-
-		# operators and pre/postconditions from hints are NOT statically added
-		#    to the operators
-		# they are added to the initial state and conjunctive goals, though
-		cmd_seq = []
-		half_cmd_seq = []
-		const_seq = []
-		for hint_dict in hints:
-			for hint in hint_dict["commands"]:
-				cmd_seq.append(hint)
-			for hint in hint_dict["half-commands"]:
-				half_cmd_seq.append(hint)
-			for hint in hint_dict["constraints"]:
-				const_seq.append(hint)
-		for i, cmd in enumerate(cmd_seq):
-			initial_state["cmd_{}".format(i)] = False
-			conjunctive_goal["cmd_{}".format(i)] = True
-		for i, cmd in enumerate(half_cmd_seq):
-			initial_state["half_cmd_{}".format(i)] = False
-			conjunctive_goal["half_cmd_{}".format(i)] = True
-		for i, cmd in enumerate(const_seq):
-			initial_state["const_{}".format(i)] = False
-			conjunctive_goal["const_{}".format(i)] = True
-
-		print(initial_state)
-		print(conjunctive_goal)
-		print(operators)
-		exit()
-
-		return initial_state, conjunctive_goal, operators
-
-	def make_initial_plan(self, initial_state, conjunctive_goal):
-		'''
-		Implement
-		'''
-		pass
-
-	def is_solution(self, plan):
-		'''
-		Implement
-		'''
-		return True
-
-	def select_subgoal(self, plan):
-		'''
-		Implement
-		'''
-		pass
-
-	def choose_operator(self, plan, operators, S_need, c):
-		'''
-		Implement
-		'''
-		pass
-
-	def resolve_threats(self, plan):
-		'''
-		Implement
-		'''
-		pass
 
 
 class Operator:
@@ -954,30 +792,20 @@ class Operator:
 		self.args = args
 
 	def is_match(self, action):
-		#print("\nOP CHECk!")
-		#print("{}, {}, {}".format(self.name, self.action_type, [str(arg) for arg in self.args]))
 		if action.name != self.name:
-			#print("  different name")
 			return False
 		if action._type != self.action_type:
-			#print("  different type")
 			return False
 		for i, argname in enumerate(action.argnames):
 			arg = action.args[argname]
 			self_arg = self.args[i]
 			if self_arg is not None:
 				if type(arg.label) is SpeechEntity and self_arg != arg.label.speech:
-					#print("different speech! {} vs {}".format(self_arg, arg.label.speech))
 					return False
 				elif type(arg.label) is not SpeechEntity and self_arg != arg.label.name:
-					#print(arg)
-					#print(type(arg.label))
-					#print(arg.label)
-					#print(self_arg)
-					#print("different val! {} vs {}".format(self_arg, arg.label.name))
 					return False
-		#print("match!")
 		return True
 
 	def __str__(self):
-		return "operator({}, {}, {})".format(self.name, self.action_type, str(["{}".format(arg) for arg in self.args]))
+		return "operator({}, {}, {})".format(self.name, self.action_type,
+					str(["{}".format(arg) for arg in self.args]))
