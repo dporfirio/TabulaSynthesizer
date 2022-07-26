@@ -7,31 +7,41 @@ The parameter tree dictates:
 - how changing a particular parameter type will affect other parameters down the tree
 
 ```
--- World
+-- World (*)
     |
     |-- Program
         |
-        |-- Recording
+        |-- Recording (d)
             |
-            |-- Text Content
+            |-- Text Content (*db)
             |   |
-            |   |-- Label Interval
+            |   |-- Label Interval (*d)
             |       |
-            |       |-- Label
+            |       |-- Label (*d)
             |
-            |-- User Sequence
+            |-- User Sequence (+db)
                 |
-                |-- Plan
+                |-- Plan (d)
                     |
-                    |-- Waypoint
+                    |-- Waypoint (pd)
                         |
-                        |-- Task Subsequence
+                        |-- Task Subsequence (qd)
                             |
-                            |-- Command
+                            |-- Command (rd)
                             |
-                            |-- Conditional
+                            |-- Conditional (rd)
                             |
-                            |-- Jump Point
+                            |-- Jump Point (rd)
+
+
+KEY:
+(*)  --  Parameter is directly editable.
+(+)  --  Paths between waypoints are directly editable.
+(d)  --  Deletable.
+(b)  --  Redoable (equivalent to deleting and re-recording).
+(q)  --  Rearrangeable. 
+(p)  --  Confirm (lock), deny (prevent) from adding to user seq., or unrestricted.
+(r)  --  Confirm (lock), deny (prevent) from adding to task seq., or unrestricted.
 ```
 
 
